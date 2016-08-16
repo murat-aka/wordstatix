@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=WordStatix
+Comment=Create concordances
+Exec=env LIBOVERLAY_SCROLLBAR=0 /opt/wordstatix/wordstatix
+Terminal=false
+Type=Application
+Icon=wordstatix
+Categories=Office;
+GenericName=WordStatix
+
