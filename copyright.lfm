@@ -555,7 +555,7 @@ object fmCopyright: TfmCopyright
     Height = 49
     Top = 21
     Width = 398
-    Caption = 'WordStatix 1.0.0'
+    Caption = 'WordStatix 1.1.0'
     Font.Color = 170
     Font.Height = 42
     Font.Name = 'Sans'
@@ -886,8 +886,8 @@ object fmCopyright: TfmCopyright
     Left = 168
     Height = 18
     Top = 169
-    Width = 413
-    Caption = 'Visit the website of Bibfilex and download the manual.'
+    Width = 209
+    Caption = 'Visit the website of Bibfilex.'
     Font.Color = clBlue
     ParentColor = False
     ParentFont = False

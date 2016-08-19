@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.0
+// WordStatix 1.1
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 
@@ -50,6 +50,7 @@ type
     bnFindFirst: TButton;
     bnFindNext: TButton;
     bnReplace: TButton;
+    bnReplaceAll: TButton;
     bvWordsCont: TBevel;
     edFltStart: TEdit;
     edFltEnd: TEdit;
@@ -65,6 +66,7 @@ type
     lbContext: TLabel;
     lbNoWord: TLabel;
     lsContext: TListBox;
+    miConcordanceRemove: TMenuItem;
     miManual: TMenuItem;
     miLine7: TMenuItem;
     miFileNew: TMenuItem;
@@ -115,6 +117,7 @@ type
     procedure apAppPropException(Sender: TObject; E: Exception);
     procedure bnFindFirstClick(Sender: TObject);
     procedure bnFindNextClick(Sender: TObject);
+    procedure bnReplaceAllClick(Sender: TObject);
     procedure bnReplaceClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
@@ -130,6 +133,7 @@ type
     procedure miConcordanceAddSkipClick(Sender: TObject);
     procedure miConcordanceCreateClick(Sender: TObject);
     procedure miConcordanceOpenSkipClick(Sender: TObject);
+    procedure miConcordanceRemoveClick(Sender: TObject);
     procedure miConcordanceSaveClick(Sender: TObject);
     procedure miConcordanceDelContClick(Sender: TObject);
     procedure miConcordanceSaveSkipClick(Sender: TObject);
@@ -158,8 +162,9 @@ type
     procedure AddSkipWord;
     function CheckFilter(stWord: string): boolean;
     function CleanField(myField: string): string;
-    function CleanXML(stText: string): string;
+    function CleanXML(stXMLText: string): string;
     procedure CreateStatistic;
+    function FindNextWord(blMessage: boolean): boolean;
     procedure SaveConcordance(stFileName: string);
     procedure CreateBookmarks;
     procedure SortWordFreq(var arWordList: array of TRecWordList;
@@ -179,6 +184,7 @@ var
   iWordsUsed: integer = 0;
   iWordsTotal: integer = 0;
   ttStart, ttEnd: TTime;
+  blStopConcordance: boolean = False;
 
 implementation
 
@@ -303,6 +309,10 @@ begin
   begin
     pcMain.ActivePage := tsStatistic;
     key := 0;
+  end;
+  if ((Key = Ord('H')) and (Shift = [ssShift, ssCtrl])) then
+  begin
+    blStopConcordance := True;
   end;
 end;
 
@@ -464,22 +474,7 @@ end;
 procedure TfmMain.bnFindNextClick(Sender: TObject);
 begin
   // Find next
-  if edFind.Text <> '' then
-  begin
-    if UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
-      meText.SelLength + 1) > 0 then
-    begin
-      meText.SelStart := UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
-        meText.SelLength + 1) - 1;
-      meText.SelLength := UTF8Length(edFind.Text);
-      meText.SetFocus;
-    end
-    else
-    begin
-      MessageDlg('No more recurrences of the text to look for.',
-        mtInformation, [mbOK], 0);
-    end;
-  end;
+  FindNextWord(True);
 end;
 
 procedure TfmMain.bnReplaceClick(Sender: TObject);
@@ -489,6 +484,11 @@ begin
   // Replace selection
   // Use clipboard because other methods
   // produce an unwanted vertical scrolling
+  if meText.SelLength = 0 then
+  begin
+    MessageDlg('No text is selected.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
   if edReplace.Text <> '' then
   begin
     stClip := Clipboard.AsText;
@@ -499,6 +499,32 @@ begin
     begin
       bnFindNextClick(nil);
     end;
+  end;
+end;
+
+procedure TfmMain.bnReplaceAllClick(Sender: TObject);
+var
+  stText: string;
+  i: integer;
+begin
+  // Replace all
+  if ((edFind.Text <> '') and (edReplace.Text <> '')) then
+  begin
+    if MessageDlg('Replace all the recurrences of ' + edFind.Text +
+      LineEnding + 'with ' + edReplace.Text + ' in the current text?',
+      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    begin
+      Abort;
+    end;
+    stText := meText.Text;
+    i := 1;
+    while UTF8Pos(edFind.Text, stText, i) > 0 do
+    begin
+      i := UTF8Pos(edFind.Text, stText, i) + 1;
+      ReplaceSubstring(stText, i - 1, UTF8Length(edFind.Text),
+        edReplace.Text);
+    end;
+    meText.Text := stText;
   end;
 end;
 
@@ -588,6 +614,8 @@ begin
       end
       else if UTF8LowerCase(ExtractFileExt(odOpenDialog.FileName)) = '.odt' then
         try
+          Screen.Cursor := crHourGlass;
+          Application.ProcessMessages;
           myZip := TUnZipper.Create;
           myList := TStringList.Create;
           stFileOrig := TStringList.Create;
@@ -612,6 +640,7 @@ begin
           myZip.Free;
           myList.Free;
           stFileOrig.Free;
+          Screen.Cursor := crDefault;
         end;
       CreateBookmarks;
     except
@@ -735,6 +764,19 @@ begin
   // Add a word to skip
   pcMain.ActivePage := tsConcordance;
   AddSkipWord;
+end;
+
+procedure TfmMain.miConcordanceRemoveClick(Sender: TObject);
+begin
+  // Remove current word
+  pcMain.ActivePage := tsConcordance;
+  if sgWordList.RowCount > 1 then
+  begin
+    if sgWordList.Cells[0, sgWordList.Row] <> '' then
+    begin
+      sgWordList.DeleteRow(sgWordList.Row);
+    end;
+  end;
 end;
 
 procedure TfmMain.miConcordanceOpenSkipClick(Sender: TObject);
@@ -875,29 +917,33 @@ procedure TfmMain.miManualClick(Sender: TObject);
 begin
   // Show manual
   {$ifdef Linux}
-  if OpenDocument('/opt/wordstatix/manual-wordstatix.pdf') = False then
+  if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available. Download it from' + LineEnding +
-      'the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix',
+    MessageDlg('No manual available in the folder of WordStatix' +
+      LineEnding + 'Download it from the website of WordStatix:' +
+      LineEnding + 'https://sites.google.com/site/wordstatix',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
   {$ifdef Win32}
-  if OpenDocument('manual-wordstatix.pdf') = False then
+  if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available. Download it from' + LineEnding +
-      'the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix',
+    MessageDlg('No manual available in the folder of WordStatix' +
+      LineEnding + 'Download it from the website of WordStatix:' +
+      LineEnding + 'https://sites.google.com/site/wordstatix',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
   {$ifdef Darwin}
-  if OpenDocument('manual-wordstatix.pdf') = False then
+  if OpenDocument(StringReplace(ExtractFileDir(Application.ExeName),
+    'wordstatix.app/Contents/MacOS', '', []) + DirectorySeparator +
+    'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available. Download it from' + LineEnding +
-      'the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix',
+    MessageDlg('No manual available in the folder of WordStatix' +
+      LineEnding + 'Download it from the website of WordStatix:' +
+      LineEnding + 'https://sites.google.com/site/wordstatix',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -963,6 +1009,32 @@ begin
   end;
 end;
 
+function TfmMain.FindNextWord(blMessage: boolean): boolean;
+begin
+  // Find next word
+  if edFind.Text <> '' then
+  begin
+    if UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
+      meText.SelLength + 1) > 0 then
+    begin
+      Result := True;
+      meText.SelStart := UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
+        meText.SelLength + 1) - 1;
+      meText.SelLength := UTF8Length(edFind.Text);
+      meText.SetFocus;
+    end
+    else
+    begin
+      Result := False;
+      if blMessage = True then
+      begin
+        MessageDlg('No more recurrences of the text to look for.',
+          mtInformation, [mbOK], 0);
+      end;
+    end;
+  end;
+end;
+
 procedure TfmMain.CreateConc(stStartText: string);
 var
   slNoWord: TStringList;
@@ -976,6 +1048,11 @@ begin
     MessageDlg('No text available.', mtWarning, [mbOK], 0);
     Abort;
   end;
+  blStopConcordance := False;
+  Screen.Cursor := crHourGlass;
+  sbStatusBar.SimpleText := 'Concordance in processing, ' +
+    'press Ctrl + Shift + H to stop.';
+  Application.ProcessMessages;
   sgWordList.Enabled := False;
   ttStart := Now;
   CreateBookmarks;
@@ -984,8 +1061,10 @@ begin
   iWordsUsed := 0;
   iWordsTotal := 0;
   stBookmark := '*';
-  sbStatusBar.SimpleText := 'Concordance in processing. Total words: ' +
-    IntToStr(iWordsTotal) + ' - Unique words: ' + IntToStr(iWordsUsed);
+  sbStatusBar.SimpleText := 'Concordance in processing, ' +
+    'press Ctrl + Shift + H to stop. Total words: ' +
+    FormatFloat('#,##0', iWordsTotal) + ' - Unique words: ' +
+    FormatFloat('#,##0', iWordsUsed) + '.';
   sgWordList.RowCount := 1;
   lsContext.Clear;
   stText := stStartText + ' ';
@@ -994,10 +1073,9 @@ begin
   stText := StringReplace(stText, #13, ' ', [rfReplaceAll]);
   stText := StringReplace(stText, #39, #39 + ' ', [rfReplaceAll]);
   stText := StringReplace(stText, #96, #39 + ' ', [rfReplaceAll]);
+  stText := StringReplace(stText, '’', #39 + ' ', [rfReplaceAll]);
   stText := StringReplace(stText, '  ', ' ', [rfReplaceAll]);
   try
-    Screen.Cursor := crHourGlass;
-    Application.ProcessMessages;
     slNoWord := TStringList.Create;
     slNoWord.CaseSensitive := False;
     slNoWord.CommaText := meSkipList.Text;
@@ -1075,9 +1153,6 @@ begin
                 stBookmark + ',';
             end;
             Inc(iWordsUsed);
-            sbStatusBar.SimpleText :=
-              'Concordance in processing. Total words: ' + IntToStr(iWordsTotal) +
-              ' - Unique words: ' + IntToStr(iWordsUsed);
           end
           else
           begin
@@ -1093,7 +1168,22 @@ begin
         end;
       end;
       stText := UTF8Copy(stText, UTF8Pos(' ', stText) + 1, UTF8Length(stText));
+      sbStatusBar.SimpleText :=
+        'Concordance in processing, ' + 'press Ctrl + Shift + H to stop. Total words: ' +
+        FormatFloat('#,##0', iWordsTotal) + ' - Unique words: ' +
+        FormatFloat('#,##0', iWordsUsed) + '.';
       Application.ProcessMessages;
+      if blStopConcordance = True then
+      begin
+        sgWordList.RowCount := 1;
+        lsContext.Clear;
+        sgStatistic.RowCount := 0;
+        sgStatistic.ColCount := 0;
+        SetLength(arWordList, 0);
+        SetLength(arWordTextual, 0);
+        sbStatusBar.SimpleText := 'Concordance interrupted';
+        Abort;
+      end;
     end;
   finally
     slNoWord.Free;
@@ -1455,32 +1545,34 @@ begin
   end;
 end;
 
-function TfmMain.CleanXML(stText: string): string;
+function TfmMain.CleanXML(stXMLText: string): string;
 var
   blTag: boolean;
   i: integer;
 begin
   // Clean a text from XML/HTML tags
+  // Do not use UTF8Lengt and UTF8Copy here
   blTag := False;
   Result := '';
-  for i := 0 to UTF8Length(stText) do
+  for i := 1 to Length(stXMLText) do
   begin
-    if UTF8Copy(stText, i, 1) = '<' then
+    if Copy(stXMLText, i, 1) = '<' then
     begin
       blTag := True;
     end
-    else if UTF8Copy(stText, i, 1) = '>' then
+    else if Copy(stXMLText, i, 1) = '>' then
     begin
       blTag := False;
     end
     else if blTag = False then
     begin
-      Result := Result + UTF8Copy(stText, i, 1);
+      Result := Result + Copy(stXMLText, i, 1);
     end;
+    Application.ProcessMessages;
   end;
-  while UTF8Copy(Result, 1, 1) = LineEnding do
+  while Copy(Result, 1, 1) = LineEnding do
   begin
-    Result := UTF8Copy(Result, 2, UTF8Length(Result));
+    Result := Copy(Result, 2, Length(Result));
   end;
 end;
 

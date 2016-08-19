@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.0
+// WordStatix 1.1
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 

@@ -573,7 +573,7 @@ object fmMain: TfmMain
       ClientWidth = 990
       object meText: TMemo
         Left = 180
-        Height = 452
+        Height = 440
         Top = 0
         Width = 810
         Align = alClient
@@ -588,88 +588,105 @@ object fmMain: TfmMain
       end
       object pnTextBottom: TPanel
         Left = 0
-        Height = 60
-        Top = 452
+        Height = 72
+        Top = 440
         Width = 990
         Align = alBottom
         BevelOuter = bvNone
-        ClientHeight = 60
+        ClientHeight = 72
         ClientWidth = 990
         TabOrder = 1
         object lbFind: TLabel
-          Left = 25
+          Left = 14
           Height = 18
-          Top = 18
+          Top = 7
           Width = 32
+          Anchors = [akLeft, akBottom]
           Caption = 'Find'
           FocusControl = edFind
           ParentColor = False
         end
         object edFind: TEdit
-          Left = 70
+          Left = 14
           Height = 35
-          Top = 12
+          Top = 28
           Width = 194
+          Anchors = [akLeft, akBottom]
           TabOrder = 0
         end
         object lbReplace: TLabel
-          Left = 512
+          Left = 456
           Height = 18
-          Top = 18
+          Top = 7
           Width = 58
+          Anchors = [akLeft, akBottom]
           Caption = 'Replace'
           FocusControl = edReplace
           ParentColor = False
         end
         object edReplace: TEdit
-          Left = 587
+          Left = 456
           Height = 35
-          Top = 12
+          Top = 28
           Width = 194
+          Anchors = [akLeft, akBottom]
           TabOrder = 3
         end
         object bnFindFirst: TButton
-          Left = 280
+          Left = 224
           Height = 30
-          Top = 14
+          Top = 33
           Width = 88
+          Anchors = [akLeft, akBottom]
           Caption = 'First'
           OnClick = bnFindFirstClick
           TabOrder = 1
         end
         object bnFindNext: TButton
-          Left = 384
+          Left = 328
           Height = 30
-          Top = 14
+          Top = 33
           Width = 88
+          Anchors = [akLeft, akBottom]
           Caption = 'Next'
           OnClick = bnFindNextClick
           TabOrder = 2
         end
         object bnReplace: TButton
-          Left = 800
+          Left = 664
           Height = 30
-          Top = 14
+          Top = 33
           Width = 176
+          Anchors = [akLeft, akBottom]
           Caption = 'Replace selection'
           OnClick = bnReplaceClick
           TabOrder = 4
         end
+        object bnReplaceAll: TButton
+          Left = 856
+          Height = 30
+          Top = 33
+          Width = 112
+          Anchors = [akLeft, akBottom]
+          Caption = 'Replace all'
+          OnClick = bnReplaceAllClick
+          TabOrder = 5
+        end
       end
       object pnListBookmark: TPanel
         Left = 0
-        Height = 452
+        Height = 440
         Top = 0
         Width = 170
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 452
+        ClientHeight = 440
         ClientWidth = 170
         ParentColor = False
         TabOrder = 2
         object lbBookmarks: TListBox
           Left = 0
-          Height = 452
+          Height = 440
           Top = 0
           Width = 170
           Align = alClient
@@ -683,7 +700,7 @@ object fmMain: TfmMain
       end
       object spText: TSplitter
         Left = 170
-        Height = 452
+        Height = 440
         Top = 0
         Width = 5
       end
@@ -965,6 +982,11 @@ object fmMain: TfmMain
         Caption = 'Add current word to skip list'
         ShortCut = 16459
         OnClick = miConcordanceAddSkipClick
+      end
+      object miConcordanceRemove: TMenuItem
+        Caption = 'Remove current word'
+        ShortCut = 24651
+        OnClick = miConcordanceRemoveClick
       end
       object miConcordanceOpenSkip: TMenuItem
         Caption = 'Open skip list...'
