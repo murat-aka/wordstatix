@@ -1,9 +1,8 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.1
+// WordStatix 1.2
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
-
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -11,7 +10,6 @@
 // of the Licence in http://www.gnu.org/licenses/gpl-3.0.txt
 // or in the file Licence.txt included in the files of the
 // source code of this software.
-
 // This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
@@ -27,7 +25,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
   StdCtrls, ExtCtrls, ComCtrls, Menus, LazUTF8, IniFiles, Clipbrd, zipper,
-  LCLIntf;
+  LCLIntf, strutils;
 
 type
 
@@ -41,7 +39,6 @@ type
   TRecWordTextual = record
     stRecWordTextual: string;
   end;
-
 
   { TfmMain }
 
@@ -183,6 +180,7 @@ var
   stFileName: string;
   iWordsUsed: integer = 0;
   iWordsTotal: integer = 0;
+  iWordsStartTot: integer = 0;
   ttStart, ttEnd: TTime;
   blStopConcordance: boolean = False;
 
@@ -922,7 +920,7 @@ begin
   begin
     MessageDlg('No manual available in the folder of WordStatix' +
       LineEnding + 'Download it from the website of WordStatix:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix',
+      LineEnding + 'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -932,7 +930,7 @@ begin
   begin
     MessageDlg('No manual available in the folder of WordStatix' +
       LineEnding + 'Download it from the website of WordStatix:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix',
+      LineEnding + 'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -943,7 +941,7 @@ begin
   begin
     MessageDlg('No manual available in the folder of WordStatix' +
       LineEnding + 'Download it from the website of WordStatix:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix',
+      LineEnding + 'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -1041,8 +1039,24 @@ var
   stText, stWord, stBookmark: string;
   i: integer;
   flNewWord: boolean;
+
+  // Create concordance for huge texts
+  procedure EvalStopProcess;
+  begin
+    if blStopConcordance = True then
+    begin
+      sgWordList.RowCount := 1;
+      lsContext.Clear;
+      sgStatistic.RowCount := 0;
+      sgStatistic.ColCount := 0;
+      SetLength(arWordList, 0);
+      SetLength(arWordTextual, 0);
+      sbStatusBar.SimpleText := 'Concordance interrupted.';
+      Abort;
+    end;
+  end;
+
 begin
-  // Create concordance
   if meText.Text = '' then
   begin
     MessageDlg('No text available.', mtWarning, [mbOK], 0);
@@ -1061,21 +1075,29 @@ begin
   iWordsUsed := 0;
   iWordsTotal := 0;
   stBookmark := '*';
-  sbStatusBar.SimpleText := 'Concordance in processing, ' +
-    'press Ctrl + Shift + H to stop. Total words: ' +
-    FormatFloat('#,##0', iWordsTotal) + ' - Unique words: ' +
-    FormatFloat('#,##0', iWordsUsed) + '.';
   sgWordList.RowCount := 1;
   lsContext.Clear;
-  stText := stStartText + ' ';
+  stText := ' ' + stStartText + ' ';
+  EvalStopProcess;
   stText := StringReplace(stText, #9, ' ', [rfReplaceAll]);
+  EvalStopProcess;
   stText := StringReplace(stText, #10, ' ', [rfReplaceAll]);
+  EvalStopProcess;
   stText := StringReplace(stText, #13, ' ', [rfReplaceAll]);
+  EvalStopProcess;
   stText := StringReplace(stText, #39, #39 + ' ', [rfReplaceAll]);
+  EvalStopProcess;
   stText := StringReplace(stText, #96, #39 + ' ', [rfReplaceAll]);
+  EvalStopProcess;
   stText := StringReplace(stText, '’', #39 + ' ', [rfReplaceAll]);
-  stText := StringReplace(stText, '  ', ' ', [rfReplaceAll]);
+  EvalStopProcess;
+  while UTF8Pos('  ', stText) > 0 do
+  begin
+    stText := StringReplace(stText, '  ', ' ', [rfReplaceAll]);
+  end;
+  EvalStopProcess;
   try
+    iWordsStartTot := WordCount(stText, [' ']);
     slNoWord := TStringList.Create;
     slNoWord.CaseSensitive := False;
     slNoWord.CommaText := meSkipList.Text;
@@ -1169,21 +1191,12 @@ begin
       end;
       stText := UTF8Copy(stText, UTF8Pos(' ', stText) + 1, UTF8Length(stText));
       sbStatusBar.SimpleText :=
-        'Concordance in processing, ' + 'press Ctrl + Shift + H to stop. Total words: ' +
-        FormatFloat('#,##0', iWordsTotal) + ' - Unique words: ' +
+        'Concordance in processing, press Ctrl + Shift + H to stop. ' +
+        'Analyzed words: ' + FormatFloat('#,##0', iWordsTotal - 1) +
+        ' of ' + FormatFloat('#,##0', iWordsStartTot) + ' - Unique words found: ' +
         FormatFloat('#,##0', iWordsUsed) + '.';
       Application.ProcessMessages;
-      if blStopConcordance = True then
-      begin
-        sgWordList.RowCount := 1;
-        lsContext.Clear;
-        sgStatistic.RowCount := 0;
-        sgStatistic.ColCount := 0;
-        SetLength(arWordList, 0);
-        SetLength(arWordTextual, 0);
-        sbStatusBar.SimpleText := 'Concordance interrupted';
-        Abort;
-      end;
+      EvalStopProcess;
     end;
   finally
     slNoWord.Free;
@@ -1192,28 +1205,10 @@ begin
   end;
   CompileGrid;
   ttEnd := Now;
-  if sgWordList.RowCount > 1 then
-  begin
-    sbStatusBar.SimpleText :=
-      'Total words: ' + IntToStr(iWordsTotal) + ' - Unique words: ' +
-      IntToStr(iWordsUsed) + ' - Concordance done in ' +
-      FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
-    sgWordList.Row := 1;
-    lsContext.Clear;
-    lsContext.Items.Text := CreateContext(sgWordList.Row, True);
-    {$ifdef Win32}
-    // Due to a bug in Windows...
-    if lsContext.Items[0] = '' then
-      lsContext.Items.Delete(0);
-    {$endif}
-    lsContext.ItemIndex := 0;
-  end
-  else
-  begin
-    lsContext.Clear;
-    sbStatusBar.SimpleText := 'No active concordance.';
-    MessageDlg('No concordance available.', mtWarning, [mbOK], 0);
-  end;
+  sbStatusBar.SimpleText :=
+    'Total words: ' + FormatFloat('#,##0', iWordsTotal - 1) +
+    ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
+    ' - Concordance done in ' + FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
 end;
 
 function TfmMain.CreateContext(GridRow: integer; blSetCursor: boolean): string;
@@ -1304,40 +1299,48 @@ var
   i: integer;
 begin
   // Compile grid of words
-  if Length(arWordList) > 0 then
-    sgWordList.Enabled := False;
-  try
-    Screen.Cursor := crHourGlass;
-    sbStatusBar.SimpleText := 'List of words in processing, please, wait.';
-    Application.ProcessMessages;
-    SortWordFreq(arWordList, rgSortBy.ItemIndex);
+  if Length(arWordList) = 0 then
+  begin
     sgWordList.RowCount := 1;
-    sgWordList.RowCount := Length(arWordList) + 1;
-    for i := 0 to Length(arWordList) - 1 do
-    begin
-      sgWordList.Cells[0, i + 1] := arWordList[i].stRecWord;
-      sgWordList.Cells[1, i + 1] := IntToStr(arWordList[i].iRecFreq);
-      sgWordList.Cells[2, i + 1] := '0';
-      ;
-      sgWordList.Cells[3, i + 1] := arWordList[i].stRecWordPos;
-      sgWordList.Cells[4, i + 1] := arWordList[i].stRecBookPos;
-      Application.ProcessMessages;
-    end;
     lsContext.Clear;
-    lsContext.Items.Text := CreateContext(sgWordList.Row, True);
+    sbStatusBar.SimpleText := 'No active concordance.';
+  end
+  else
+  begin
+    try
+      Screen.Cursor := crHourGlass;
+      sgWordList.Enabled := False;
+      sbStatusBar.SimpleText := 'List of words in processing, please, wait.';
+      Application.ProcessMessages;
+      SortWordFreq(arWordList, rgSortBy.ItemIndex);
+      sgWordList.RowCount := 1;
+      sgWordList.RowCount := Length(arWordList) + 1;
+      for i := 0 to Length(arWordList) - 1 do
+      begin
+        sgWordList.Cells[0, i + 1] := arWordList[i].stRecWord;
+        sgWordList.Cells[1, i + 1] := IntToStr(arWordList[i].iRecFreq);
+        sgWordList.Cells[2, i + 1] := '0';
+        sgWordList.Cells[3, i + 1] := arWordList[i].stRecWordPos;
+        sgWordList.Cells[4, i + 1] := arWordList[i].stRecBookPos;
+        Application.ProcessMessages;
+      end;
+      lsContext.Clear;
+      lsContext.Items.Text := CreateContext(sgWordList.Row, True);
     {$ifdef Win32}
-    // Due to a bug in Windows...
-    if lsContext.Items[0] = '' then
-      lsContext.Items.Delete(0);
+      // Due to a bug in Windows...
+      if lsContext.Items[0] = '' then
+        lsContext.Items.Delete(0);
     {$endif}
-    lsContext.ItemIndex := 0;
-    sbStatusBar.SimpleText :=
-      'Total words: ' + IntToStr(iWordsTotal) + ' - Unique words: ' +
-      IntToStr(iWordsUsed) + ' - Concordance done in ' +
-      FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
-  finally
-    sgWordList.Enabled := True;
-    Screen.Cursor := crDefault;
+      lsContext.ItemIndex := 0;
+      sbStatusBar.SimpleText :=
+        'Total words: ' + FormatFloat('#,##0', iWordsTotal - 1) +
+        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
+        ' - Concordance done in ' + FormatDateTime('hh:nn:ss',
+        ttEnd - ttStart) + '.';
+    finally
+      sgWordList.Enabled := True;
+      Screen.Cursor := crDefault;
+    end;
   end;
 end;
 

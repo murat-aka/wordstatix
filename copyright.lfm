@@ -555,7 +555,7 @@ object fmCopyright: TfmCopyright
     Height = 49
     Top = 21
     Width = 398
-    Caption = 'WordStatix 1.1.0'
+    Caption = 'WordStatix 1.2.0'
     Font.Color = 170
     Font.Height = 42
     Font.Name = 'Sans'
