@@ -20,18 +20,18 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
-      <MinorVersionNr Value="2"/>
+      <MinorVersionNr Value="3"/>
       <StringTable Comments="Free software to create concordances" LegalCopyright="Massimo Nardello 2016" ProductVersion="WordStatix"/>
     </VersionInfo>
     <CustomData Count="13">
       <Item0 Name="lazpackager/copyright" Value="2016 Massimo Nardello"/>
       <Item1 Name="lazpackager/deb/ppa" Value="ppa:johndoe/use-your-own"/>
       <Item2 Name="lazpackager/deb/series" Value="xerus"/>
-      <Item3 Name="lazpackager/deb/tpl_changelog" Value="wordstatix (1.2.0.0) xerus; urgency=low
+      <Item3 Name="lazpackager/deb/tpl_changelog" Value="wordstatix (1.3.0.0) xerus; urgency=low
 
-  * Original version 1.2.0.0 packaged with lazdebian
+  * Original version 1.3.0.0 packaged with lazdebian
 
- -- Massimo Nardello &lt;ms.nardello@gmail.com>  Sun, 21 Aug 2016 11:00:00 +0200
+ -- Massimo Nardello &lt;ms.nardello@gmail.com>  Sun, 23 Aug 2016 11:00:00 +0200
 
 
 "/>
@@ -39,7 +39,7 @@
 Maintainer: Massimo Nardello &lt;ms.nardello@gmail.com>
 Section: Office
 Priority: optional
-Standards-Version: 1.2.0.0
+Standards-Version: 1.3.0.0
 
 Package: wordstatix
 Architecture: any
@@ -126,10 +126,13 @@ recurrence and context."/>
         <FormatVersion Value="1"/>
       </local>
     </RunParams>
-    <RequiredPackages Count="1">
+    <RequiredPackages Count="2">
       <Item1>
-        <PackageName Value="LCL"/>
+        <PackageName Value="TAChartLazarusPkg"/>
       </Item1>
+      <Item2>
+        <PackageName Value="LCL"/>
+      </Item2>
     </RequiredPackages>
     <Units Count="3">
       <Unit0>

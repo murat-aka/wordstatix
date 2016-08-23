@@ -1,11 +1,11 @@
 object fmMain: TfmMain
-  Left = 566
-  Height = 600
-  Top = 310
-  Width = 1000
+  Left = 466
+  Height = 701
+  Top = 258
+  Width = 1117
   Caption = 'WordStatix'
-  ClientHeight = 574
-  ClientWidth = 1000
+  ClientHeight = 675
+  ClientWidth = 1117
   Constraints.MinHeight = 600
   Constraints.MinWidth = 1000
   Icon.Data = {
@@ -551,16 +551,16 @@ object fmMain: TfmMain
   object sbStatusBar: TStatusBar
     Left = 0
     Height = 20
-    Top = 554
-    Width = 1000
+    Top = 655
+    Width = 1117
     Panels = <>
     SimpleText = 'No active concordance'
   end
   object pcMain: TPageControl
     Left = 0
-    Height = 544
+    Height = 645
     Top = 10
-    Width = 1000
+    Width = 1117
     ActivePage = tsFile
     Align = alClient
     BorderSpacing.Top = 10
@@ -569,15 +569,16 @@ object fmMain: TfmMain
     OnChange = pcMainChange
     object tsFile: TTabSheet
       Caption = 'File'
-      ClientHeight = 512
-      ClientWidth = 990
+      ClientHeight = 613
+      ClientWidth = 1107
       object meText: TMemo
         Left = 180
-        Height = 440
-        Top = 0
-        Width = 810
+        Height = 536
+        Top = 5
+        Width = 927
         Align = alClient
         BorderSpacing.Left = 5
+        BorderSpacing.Top = 5
         Font.Height = -19
         OnKeyDown = meTextKeyDown
         OnMouseWheel = meTextMouseWheel
@@ -589,12 +590,12 @@ object fmMain: TfmMain
       object pnTextBottom: TPanel
         Left = 0
         Height = 72
-        Top = 440
-        Width = 990
+        Top = 541
+        Width = 1107
         Align = alBottom
         BevelOuter = bvNone
         ClientHeight = 72
-        ClientWidth = 990
+        ClientWidth = 1107
         TabOrder = 1
         object lbFind: TLabel
           Left = 14
@@ -675,21 +676,22 @@ object fmMain: TfmMain
       end
       object pnListBookmark: TPanel
         Left = 0
-        Height = 440
+        Height = 541
         Top = 0
         Width = 170
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 440
+        ClientHeight = 541
         ClientWidth = 170
         ParentColor = False
         TabOrder = 2
         object lbBookmarks: TListBox
           Left = 0
-          Height = 440
-          Top = 0
+          Height = 536
+          Top = 5
           Width = 170
           Align = alClient
+          BorderSpacing.Top = 5
           ItemHeight = 0
           OnMouseUp = lbBookmarksMouseUp
           ParentColor = True
@@ -700,24 +702,24 @@ object fmMain: TfmMain
       end
       object spText: TSplitter
         Left = 170
-        Height = 440
+        Height = 541
         Top = 0
         Width = 5
       end
     end
     object tsConcordance: TTabSheet
       Caption = 'Concordance'
-      ClientHeight = 512
-      ClientWidth = 990
+      ClientHeight = 613
+      ClientWidth = 1107
       object meSkipList: TMemo
         Left = 554
         Height = 64
         Top = 152
-        Width = 417
+        Width = 533
         Anchors = [akTop, akLeft, akRight]
         OnExit = meSkipListExit
         ScrollBars = ssAutoVertical
-        TabOrder = 3
+        TabOrder = 5
       end
       object sgWordList: TStringGrid
         Left = 20
@@ -784,13 +786,6 @@ object fmMain: TfmMain
         OnClick = rgSortByClick
         TabOrder = 1
       end
-      object bvWordsCont: TBevel
-        Left = 736
-        Height = 81
-        Top = 29
-        Width = 216
-        Shape = bsFrame
-      end
       object lbNoWord: TLabel
         Left = 554
         Height = 18
@@ -811,19 +806,19 @@ object fmMain: TfmMain
       end
       object lsContext: TListBox
         Left = 20
-        Height = 76
+        Height = 180
         Top = 416
-        Width = 951
+        Width = 1067
         Anchors = [akTop, akLeft, akRight, akBottom]
         ItemHeight = 0
-        ScrollWidth = 949
-        TabOrder = 6
+        ScrollWidth = 1065
+        TabOrder = 8
         TopIndex = -1
       end
       object edWordsCont: TEdit
-        Left = 760
+        Left = 747
         Height = 35
-        Top = 53
+        Top = 45
         Width = 48
         NumbersOnly = True
         ReadOnly = True
@@ -831,16 +826,16 @@ object fmMain: TfmMain
         Text = '6'
       end
       object udWordsCont: TUpDown
-        Left = 808
+        Left = 795
         Height = 35
-        Top = 53
+        Top = 45
         Width = 25
         Associate = edWordsCont
         Max = 20
         Min = 2
         OnChanging = udWordsContChanging
         Position = 6
-        TabOrder = 7
+        TabOrder = 3
         Wrap = False
       end
       object lbWordsCont: TLabel
@@ -849,10 +844,8 @@ object fmMain: TfmMain
         Top = 20
         Width = 128
         Caption = 'Words in context'
-        Color = clBackground
         FocusControl = edWordsCont
         ParentColor = False
-        Transparent = False
       end
       object lbFltStart: TLabel
         Left = 554
@@ -876,28 +869,36 @@ object fmMain: TfmMain
         Left = 552
         Height = 35
         Top = 256
-        Width = 417
+        Width = 533
         Anchors = [akTop, akLeft, akRight]
-        TabOrder = 4
+        TabOrder = 6
       end
       object edFltEnd: TEdit
         Left = 554
         Height = 35
         Top = 331
-        Width = 417
+        Width = 533
         Anchors = [akTop, akLeft, akRight]
-        TabOrder = 5
+        TabOrder = 7
+      end
+      object cbCollatedSort: TCheckBox
+        Left = 744
+        Height = 23
+        Top = 87
+        Width = 135
+        Caption = 'Advanced sort'
+        TabOrder = 4
       end
     end
     object tsStatistic: TTabSheet
       Caption = 'Statistic'
-      ClientHeight = 512
-      ClientWidth = 990
+      ClientHeight = 613
+      ClientWidth = 1107
       object sgStatistic: TStringGrid
         Left = 0
-        Height = 512
+        Height = 613
         Top = 0
-        Width = 990
+        Width = 1107
         Align = alClient
         AutoEdit = False
         ColCount = 0
@@ -911,6 +912,152 @@ object fmMain: TfmMain
         RowCount = 0
         TabOrder = 0
         OnPrepareCanvas = sgStatisticPrepareCanvas
+      end
+    end
+    object tsDiagram: TTabSheet
+      Caption = 'Diagram'
+      ClientHeight = 613
+      ClientWidth = 1107
+      OnResize = tsDiagramResize
+      object pnDiagram: TPanel
+        Left = 0
+        Height = 72
+        Top = 541
+        Width = 1107
+        Align = alBottom
+        BevelOuter = bvNone
+        ClientHeight = 72
+        ClientWidth = 1107
+        TabOrder = 0
+        object cbComboDiag1: TComboBox
+          Left = 36
+          Height = 34
+          Top = 28
+          Width = 220
+          ItemHeight = 0
+          OnKeyDown = cbComboDiag1KeyDown
+          Style = csDropDownList
+          TabOrder = 0
+        end
+        object cbComboDiag2: TComboBox
+          Left = 296
+          Height = 34
+          Top = 28
+          Width = 220
+          ItemHeight = 0
+          OnKeyDown = cbComboDiag2KeyDown
+          Style = csDropDownList
+          TabOrder = 1
+        end
+        object cbComboDiag3: TComboBox
+          Left = 560
+          Height = 34
+          Top = 28
+          Width = 220
+          ItemHeight = 0
+          OnKeyDown = cbComboDiag3KeyDown
+          Style = csDropDownList
+          TabOrder = 2
+        end
+        object lbDiag1: TLabel
+          Left = 36
+          Height = 18
+          Top = 7
+          Width = 54
+          Caption = 'Word 1'
+          ParentColor = False
+        end
+        object lbDiag2: TLabel
+          Left = 296
+          Height = 18
+          Top = 7
+          Width = 54
+          Caption = 'Word 2'
+          ParentColor = False
+        end
+        object lbDiag3: TLabel
+          Left = 565
+          Height = 18
+          Top = 7
+          Width = 54
+          Caption = 'Word 3'
+          ParentColor = False
+        end
+      end
+      object sbDiagram: TScrollBox
+        Left = 0
+        Height = 541
+        Top = 0
+        Width = 1107
+        HorzScrollBar.Increment = 97
+        HorzScrollBar.Page = 973
+        HorzScrollBar.Smooth = True
+        HorzScrollBar.Tracking = True
+        VertScrollBar.Page = 50
+        Align = alClient
+        AutoSize = True
+        ClientHeight = 537
+        ClientWidth = 1103
+        TabOrder = 1
+        object chChart: TChart
+          Left = 0
+          Height = 480
+          Top = 0
+          Width = 973
+          AllowZoom = False
+          AntialiasingMode = amOn
+          AxisList = <          
+            item
+              Minors = <>
+              Title.LabelFont.Orientation = 900
+            end          
+            item
+              Alignment = calBottom
+              Marks.Format = '%2:s'
+              Marks.Source = csChartSource1
+              Marks.Style = smsLabel
+              Minors = <>
+            end>
+          ExpandPercentage = 2
+          Foot.Brush.Color = clBtnFace
+          Foot.Font.Color = clBlue
+          Legend.Visible = True
+          Title.Brush.Color = clBtnFace
+          Title.Font.Color = clBlue
+          Title.Text.Strings = (
+            'Diagram made with WordStatix'
+          )
+          Anchors = [akTop, akLeft, akBottom]
+          Visible = False
+          object chChartBarSeries1: TBarSeries
+            Active = False
+            Marks.Format = '%0:.9g'
+            Marks.Style = smsValue
+            ZPosition = 60
+            BarBrush.Color = clRed
+            Depth = 10
+            Source = csChartSource1
+          end
+          object chChartBarSeries2: TBarSeries
+            Active = False
+            Marks.Format = '%0:.9g'
+            Marks.Style = smsValue
+            ZPosition = 30
+            BarBrush.Color = clRed
+            BarOffsetPercent = 10
+            Depth = 10
+            Source = csChartSource2
+          end
+          object chChartBarSeries3: TBarSeries
+            Active = False
+            Marks.Format = '%0:.9g'
+            Marks.Style = smsValue
+            BarBrush.Color = clRed
+            BarOffsetPercent = 20
+            Depth = 10
+            Source = csChartSource3
+          end
+        end
       end
     end
   end
@@ -1001,7 +1148,7 @@ object fmMain: TfmMain
       end
       object miConcordanceDelCont: TMenuItem
         Caption = 'Delete selected recurrence'
-        ShortCut = 16452
+        ShortCut = 24644
         OnClick = miConcordanceDelContClick
       end
       object miLine5: TMenuItem
@@ -1026,6 +1173,48 @@ object fmMain: TfmMain
       object miStatisticSave: TMenuItem
         Caption = 'Save statistics..'
         OnClick = miStatisticSaveClick
+      end
+    end
+    object miDiagram: TMenuItem
+      Caption = 'Diagram'
+      object miDiagramCreate: TMenuItem
+        Caption = 'Create diagram'
+        ShortCut = 16452
+        OnClick = miDiagramCreateClick
+      end
+      object miLine8: TMenuItem
+        Caption = '-'
+      end
+      object miDiaZoomIn: TMenuItem
+        Caption = 'Zoom in'
+        ShortCut = 16571
+        OnClick = miDiaZoomInClick
+      end
+      object miDiaZoomOut: TMenuItem
+        Caption = 'Zoom out'
+        ShortCut = 16573
+        OnClick = miDiaZoomOutClick
+      end
+      object miDiaZoomNormal: TMenuItem
+        Caption = 'Normal wifth'
+        ShortCut = 16432
+        OnClick = miDiaZoomNormalClick
+      end
+      object miLine9: TMenuItem
+        Caption = '-'
+      end
+      object miDiagramShowVal: TMenuItem
+        AutoCheck = True
+        Caption = 'Show values'
+        Checked = True
+        OnClick = miDiagramShowValClick
+      end
+      object miLine10: TMenuItem
+        Caption = '-'
+      end
+      object miDiagramSave: TMenuItem
+        Caption = 'Save diagram...'
+        OnClick = miDiagramSaveClick
       end
     end
     object miCopyright: TMenuItem
@@ -1061,5 +1250,17 @@ object fmMain: TfmMain
     OnException = apAppPropException
     left = 444
     top = 164
+  end
+  object csChartSource1: TListChartSource
+    left = 252
+    top = 185
+  end
+  object csChartSource2: TListChartSource
+    left = 280
+    top = 213
+  end
+  object csChartSource3: TListChartSource
+    left = 308
+    top = 241
   end
 end

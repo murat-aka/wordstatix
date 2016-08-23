@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.2
+// WordStatix 1.3
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 
@@ -27,7 +27,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, Unit1, Copyright
+  Forms, tachartlazaruspkg, Unit1, Copyright
   { you can add units after this };
 
 {$R *.res}
