@@ -1,7 +1,7 @@
 object fmMain: TfmMain
-  Left = 466
+  Left = 473
   Height = 701
-  Top = 258
+  Top = 268
   Width = 1117
   Caption = 'WordStatix'
   ClientHeight = 675
@@ -567,6 +567,7 @@ object fmMain: TfmMain
     TabIndex = 0
     TabOrder = 1
     OnChange = pcMainChange
+    OnChanging = pcMainChanging
     object tsFile: TTabSheet
       Caption = 'File'
       ClientHeight = 613
@@ -714,16 +715,16 @@ object fmMain: TfmMain
       object meSkipList: TMemo
         Left = 554
         Height = 64
-        Top = 152
+        Top = 194
         Width = 533
         Anchors = [akTop, akLeft, akRight]
         OnExit = meSkipListExit
         ScrollBars = ssAutoVertical
-        TabOrder = 5
+        TabOrder = 6
       end
       object sgWordList: TStringGrid
         Left = 20
-        Height = 346
+        Height = 388
         Top = 20
         Width = 516
         AutoEdit = False
@@ -756,7 +757,7 @@ object fmMain: TfmMain
         DefaultRowHeight = 25
         FixedCols = 0
         Flat = True
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goRangeSelect, goColSizing, goEditing, goRowSelect, goSmoothScroll]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goRangeSelect, goColSizing, goEditing, goRowSelect, goThumbTracking, goSmoothScroll, goScrollKeepVisible]
         RowCount = 1
         TabOrder = 0
         OnKeyDown = sgWordListKeyDown
@@ -764,7 +765,7 @@ object fmMain: TfmMain
       end
       object rgSortBy: TRadioGroup
         Left = 554
-        Height = 90
+        Height = 116
         Top = 20
         Width = 161
         AutoFill = True
@@ -776,7 +777,7 @@ object fmMain: TfmMain
         ChildSizing.ShrinkVertical = crsScaleChilds
         ChildSizing.Layout = cclLeftToRightThenTopToBottom
         ChildSizing.ControlsPerLine = 1
-        ClientHeight = 71
+        ClientHeight = 97
         ClientWidth = 159
         ItemIndex = 0
         Items.Strings = (
@@ -789,7 +790,7 @@ object fmMain: TfmMain
       object lbNoWord: TLabel
         Left = 554
         Height = 18
-        Top = 127
+        Top = 169
         Width = 289
         Caption = 'Words to skip (separated by commas)'
         FocusControl = meSkipList
@@ -798,7 +799,7 @@ object fmMain: TfmMain
       object lbContext: TLabel
         Left = 20
         Height = 18
-        Top = 389
+        Top = 429
         Width = 350
         Caption = 'Recurrences of the selected word with context'
         FocusControl = lsContext
@@ -806,13 +807,13 @@ object fmMain: TfmMain
       end
       object lsContext: TListBox
         Left = 20
-        Height = 180
-        Top = 416
+        Height = 140
+        Top = 456
         Width = 1067
         Anchors = [akTop, akLeft, akRight, akBottom]
         ItemHeight = 0
         ScrollWidth = 1065
-        TabOrder = 8
+        TabOrder = 9
         TopIndex = -1
       end
       object edWordsCont: TEdit
@@ -850,7 +851,7 @@ object fmMain: TfmMain
       object lbFltStart: TLabel
         Left = 554
         Height = 18
-        Top = 231
+        Top = 273
         Width = 372
         Caption = 'Only words starting with (separated by commas)'
         FocusControl = edFltStart
@@ -859,7 +860,7 @@ object fmMain: TfmMain
       object lbFltEnd: TLabel
         Left = 554
         Height = 18
-        Top = 306
+        Top = 348
         Width = 366
         Caption = 'Only words ending with (separated by commas)'
         FocusControl = edFltEnd
@@ -868,18 +869,18 @@ object fmMain: TfmMain
       object edFltStart: TEdit
         Left = 552
         Height = 35
-        Top = 256
+        Top = 298
         Width = 533
         Anchors = [akTop, akLeft, akRight]
-        TabOrder = 6
+        TabOrder = 7
       end
       object edFltEnd: TEdit
         Left = 554
         Height = 35
-        Top = 331
+        Top = 373
         Width = 533
         Anchors = [akTop, akLeft, akRight]
-        TabOrder = 7
+        TabOrder = 8
       end
       object cbCollatedSort: TCheckBox
         Left = 744
@@ -888,6 +889,14 @@ object fmMain: TfmMain
         Width = 135
         Caption = 'Advanced sort'
         TabOrder = 4
+      end
+      object cbSkipNumbers: TCheckBox
+        Left = 742
+        Height = 23
+        Top = 113
+        Width = 132
+        Caption = 'Skip numbers'
+        TabOrder = 5
       end
     end
     object tsStatistic: TTabSheet
@@ -908,7 +917,7 @@ object fmMain: TfmMain
         FixedRows = 0
         Flat = True
         HeaderHotZones = []
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goColSizing, goDblClickAutoSize, goSmoothScroll, goFixedColSizing]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goRowSelect, goThumbTracking, goDblClickAutoSize, goSmoothScroll, goScrollKeepVisible, goFixedColSizing]
         RowCount = 0
         TabOrder = 0
         OnPrepareCanvas = sgStatisticPrepareCanvas
@@ -935,7 +944,6 @@ object fmMain: TfmMain
           Top = 28
           Width = 220
           ItemHeight = 0
-          OnKeyDown = cbComboDiag1KeyDown
           Style = csDropDownList
           TabOrder = 0
         end
@@ -1001,7 +1009,7 @@ object fmMain: TfmMain
         TabOrder = 1
         object chChart: TChart
           Left = 0
-          Height = 480
+          Height = 484
           Top = 0
           Width = 973
           AllowZoom = False
@@ -1027,13 +1035,13 @@ object fmMain: TfmMain
           Title.Text.Strings = (
             'Diagram made with WordStatix'
           )
+          Toolset = ctChartToolset
           Anchors = [akTop, akLeft, akBottom]
           Visible = False
           object chChartBarSeries1: TBarSeries
             Active = False
             Marks.Format = '%0:.9g'
             Marks.Style = smsValue
-            ZPosition = 60
             BarBrush.Color = clRed
             Depth = 10
             Source = csChartSource1
@@ -1042,9 +1050,7 @@ object fmMain: TfmMain
             Active = False
             Marks.Format = '%0:.9g'
             Marks.Style = smsValue
-            ZPosition = 30
             BarBrush.Color = clRed
-            BarOffsetPercent = 10
             Depth = 10
             Source = csChartSource2
           end
@@ -1053,7 +1059,6 @@ object fmMain: TfmMain
             Marks.Format = '%0:.9g'
             Marks.Style = smsValue
             BarBrush.Color = clRed
-            BarOffsetPercent = 20
             Depth = 10
             Source = csChartSource3
           end
@@ -1127,12 +1132,12 @@ object fmMain: TfmMain
       end
       object miConcordanceAddSkip: TMenuItem
         Caption = 'Add current word to skip list'
-        ShortCut = 16459
+        ShortCut = 24651
         OnClick = miConcordanceAddSkipClick
       end
       object miConcordanceRemove: TMenuItem
         Caption = 'Remove current word'
-        ShortCut = 24651
+        ShortCut = 16459
         OnClick = miConcordanceRemoveClick
       end
       object miConcordanceOpenSkip: TMenuItem
@@ -1164,7 +1169,7 @@ object fmMain: TfmMain
       Caption = 'Statistic'
       object miStatisticCreate: TMenuItem
         Caption = 'Create statistic'
-        ShortCut = 16455
+        ShortCut = 16468
         OnClick = miStatisticCreateClick
       end
       object miLine6: TMenuItem
@@ -1177,10 +1182,15 @@ object fmMain: TfmMain
     end
     object miDiagram: TMenuItem
       Caption = 'Diagram'
-      object miDiagramCreate: TMenuItem
-        Caption = 'Create diagram'
-        ShortCut = 16452
-        OnClick = miDiagramCreateClick
+      object miDiagramCreateSingleWords: TMenuItem
+        Caption = 'Create diagram of single words'
+        ShortCut = 16457
+        OnClick = miDiagramCreateSingleWordsClick
+      end
+      object miDiagramCreateAllWords: TMenuItem
+        Caption = 'Create diagram of total words'
+        ShortCut = 24649
+        OnClick = miDiagramCreateAllWordsClick
       end
       object miLine8: TMenuItem
         Caption = '-'
@@ -1234,8 +1244,8 @@ object fmMain: TfmMain
   end
   object odOpenDialog: TOpenDialog
     Title = 'Open file'
-    left = 752
-    top = 152
+    left = 888
+    top = 176
   end
   object sdSaveDialog: TSaveDialog
     Title = 'Save concordance'
@@ -1253,7 +1263,7 @@ object fmMain: TfmMain
   end
   object csChartSource1: TListChartSource
     left = 252
-    top = 185
+    top = 184
   end
   object csChartSource2: TListChartSource
     left = 280
@@ -1262,5 +1272,9 @@ object fmMain: TfmMain
   object csChartSource3: TListChartSource
     left = 308
     top = 241
+  end
+  object ctChartToolset: TChartToolset
+    left = 285
+    top = 319
   end
 end

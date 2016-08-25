@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <Compiler Value="/usr/bin/fpc" Date="1448039591"/>
-  <Params Value=" -MObjFPC -Scghi -Cg -O1 -g -gl -l -vewnhibq -Fl/opt/gnome/lib -Fu/usr/lib64/lazarus/components/tachart/lib/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/components/ideintf/units/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/components/lazcontrols/lib/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/lcl/units/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/lcl/units/x86_64-linux -Fu/usr/lib64/lazarus/components/lazutils/lib/x86_64-linux -Fu/usr/lib64/lazarus/packager/units/x86_64-linux -Fu/home/massimo/Sorgenti/WordStatix_1.3.0/ -dLCL -dLCLgtk2 wordstatix.lpr"/>
+  <Params Value=" -MObjFPC -Scghi -Cg -O1 -g -gl -l -vewnhibq -Fl/opt/gnome/lib -Fu/usr/lib64/lazarus/components/tachart/lib/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/components/ideintf/units/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/components/lazcontrols/lib/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/lcl/units/x86_64-linux/gtk2 -Fu/usr/lib64/lazarus/lcl/units/x86_64-linux -Fu/usr/lib64/lazarus/components/lazutils/lib/x86_64-linux -Fu/usr/lib64/lazarus/packager/units/x86_64-linux -Fu/home/massimo/Sorgenti/WordStatix_1.4.0/ -dLCL -dLCLgtk2 wordstatix.lpr"/>
 </CONFIG>
