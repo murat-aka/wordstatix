@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.4
+// WordStatix 1.5
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 
@@ -44,7 +44,6 @@ type
     tmAlarmForm: TTimer;
     procedure bnCopyrightClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
-    procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure FormShow(Sender: TObject);
     procedure lbSiteClick(Sender: TObject);
@@ -62,27 +61,12 @@ implementation
 
 {$R *.lfm}
 
-uses Unit1;
-
 { TfmCopyright }
 
 procedure TfmCopyright.FormClose(Sender: TObject; var CloseAction: TCloseAction);
 begin
   // Stop the timer anyway
   tmAlarmForm.Enabled := False;
-end;
-
-procedure TfmCopyright.FormCreate(Sender: TObject);
-begin
-  // Form color
-  {$ifdef Win32}
-  fmCopyright.Color := clWhite;
-  meCopyrightText.Color := clWhite;
-  {$endif}
-  {$ifdef Darwin}
-  fmCopyright.Color := clWhite;
-  meCopyrightText.Color := clWhite;
-  {$endif}
 end;
 
 procedure TfmCopyright.bnCopyrightClick(Sender: TObject);

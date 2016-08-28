@@ -8,6 +8,7 @@ object fmCopyright: TfmCopyright
   Caption = 'Copyright'
   ClientHeight = 517
   ClientWidth = 748
+  Color = clWhite
   FormStyle = fsStayOnTop
   Icon.Data = {
     3E42000000000100010040400000010020002842000016000000280000004000
@@ -544,7 +545,6 @@ object fmCopyright: TfmCopyright
   }
   KeyPreview = True
   OnClose = FormClose
-  OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   OnShow = FormShow
   Position = poScreenCenter
@@ -555,7 +555,7 @@ object fmCopyright: TfmCopyright
     Height = 49
     Top = 21
     Width = 398
-    Caption = 'WordStatix 1.4.0'
+    Caption = 'WordStatix 1.5.0'
     Font.Color = 170
     Font.Height = 42
     Font.Name = 'Sans'
@@ -584,7 +584,7 @@ object fmCopyright: TfmCopyright
     Height = 232
     Top = 216
     Width = 704
-    Color = clForm
+    Color = clWhite
     Lines.Strings = (
       'This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. You can read the version 3 of the Licence in in http://www.gnu.org/licenses/gpl-3.0.txt. For other information you can also see http://www.gnu.org/licenses.'
       ''
@@ -886,8 +886,8 @@ object fmCopyright: TfmCopyright
     Left = 168
     Height = 18
     Top = 169
-    Width = 209
-    Caption = 'Visit the website of Bibfilex.'
+    Width = 232
+    Caption = 'Visit the website of WordStatix'
     Font.Color = clBlue
     ParentColor = False
     ParentFont = False
