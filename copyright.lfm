@@ -5,6 +5,7 @@ object fmCopyright: TfmCopyright
   Width = 748
   AlphaBlend = True
   BorderIcons = []
+  BorderStyle = bsNone
   Caption = 'Copyright'
   ClientHeight = 517
   ClientWidth = 748
@@ -550,12 +551,20 @@ object fmCopyright: TfmCopyright
   Position = poScreenCenter
   ShowInTaskBar = stNever
   LCLVersion = '1.6.0.4'
+  object shShape: TShape
+    Left = 0
+    Height = 517
+    Top = 0
+    Width = 748
+    Align = alClient
+    Pen.Color = clGray
+  end
   object lbCopyrightName: TLabel
     Left = 168
     Height = 49
     Top = 21
     Width = 398
-    Caption = 'WordStatix 1.5.0'
+    Caption = 'WordStatix 1.6.0'
     Font.Color = 170
     Font.Height = 42
     Font.Name = 'Sans'

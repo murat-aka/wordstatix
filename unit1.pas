@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.5
+// WordStatix 1.6
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 // This program is free software: you can redistribute it and/or modify
@@ -89,6 +89,11 @@ type
     lbNoWord: TLabel;
     csChartSource1: TListChartSource;
     lsContext: TListBox;
+    miStatisticSortFreq: TMenuItem;
+    miStatisticSortName: TMenuItem;
+    miLine6a: TMenuItem;
+    miLine4a: TMenuItem;
+    miConcordanceJoin: TMenuItem;
     miDiagramShowGrid: TMenuItem;
     miDiagramAllWordNoBook: TMenuItem;
     miConcordanceRefreshGrid: TMenuItem;
@@ -110,7 +115,7 @@ type
     miFileNew: TMenuItem;
     miStatisticSave: TMenuItem;
     miStatisticCreate: TMenuItem;
-    miLine6: TMenuItem;
+    miLine6b: TMenuItem;
     miStatistic: TMenuItem;
     miFileSaveAs: TMenuItem;
     miLine5: TMenuItem;
@@ -187,6 +192,7 @@ type
     procedure miConcodanceShowSelectedClick(Sender: TObject);
     procedure miConcordanceAddSkipClick(Sender: TObject);
     procedure miConcordanceCreateClick(Sender: TObject);
+    procedure miConcordanceJoinClick(Sender: TObject);
     procedure miConcordanceOpenSkipClick(Sender: TObject);
     procedure miConcordanceRefreshGridClick(Sender: TObject);
     procedure miConcordanceRemoveClick(Sender: TObject);
@@ -213,10 +219,14 @@ type
     procedure miFileOpenClick(Sender: TObject);
     procedure miFileSaveClick(Sender: TObject);
     procedure miStatisticSaveClick(Sender: TObject);
+    procedure miStatisticSortFreqClick(Sender: TObject);
+    procedure miStatisticSortNameClick(Sender: TObject);
     procedure pcMainChange(Sender: TObject);
     procedure pcMainChanging(Sender: TObject; var AllowChange: boolean);
     procedure sgStatisticPrepareCanvas(Sender: TObject; aCol, aRow: integer;
       aState: TGridDrawState);
+    procedure sgStatisticSelectCell(Sender: TObject; aCol, aRow: integer;
+      var CanSelect: boolean);
     procedure sgWordListKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure sgWordListSelection(Sender: TObject; aCol, aRow: integer);
     procedure tsDiagramResize(Sender: TObject);
@@ -259,6 +269,7 @@ var
   blGridConcMod: boolean = False;
   blStopConcordance: boolean = False;
   blConInProc: boolean = False;
+  stDiagTitle: string;
 
 implementation
 
@@ -496,9 +507,25 @@ procedure TfmMain.sgStatisticPrepareCanvas(Sender: TObject;
   aCol, aRow: integer; aState: TGridDrawState);
 begin
   // Font of the last row and second col in Statistic
-  if ((aRow = sgStatistic.RowCount - 1) or (aCol = 1)) then
+  if aRow = sgStatistic.RowCount - 1 then
   begin
     sgStatistic.Canvas.Font.Style := [fsBold];
+    sgStatistic.Canvas.Brush.Color := clBtnFace;
+  end
+  else
+  if aCol = 1 then
+  begin
+    sgStatistic.Canvas.Font.Style := [fsBold];
+  end;
+end;
+
+procedure TfmMain.sgStatisticSelectCell(Sender: TObject; aCol, aRow: integer;
+  var CanSelect: boolean);
+begin
+  // Avoid select last row
+  if aRow = sgStatistic.RowCount - 1 then
+  begin
+    CanSelect := False;
   end;
 end;
 
@@ -605,16 +632,48 @@ begin
   end
   else if ((Key = Ord('P')) and (Shift = [ssCtrl, ssShift])) then
   begin
-    if MessageDlg('Compact all paragraphs not separated by an empty line' +
-      LineEnding + 'and remove double spaces in the text?', mtConfirmation,
-      [mbOK, mbCancel], 0) = mrCancel then
+    if meText.Text = '' then
+    begin
       Abort;
-    meText.Text := StringReplace(meText.Text, LineEnding + LineEnding,
-      #2, [rfReplaceAll]);
-    meText.Text := StringReplace(meText.Text, LineEnding, ' ', [rfReplaceAll]);
-    meText.Text := StringReplace(meText.Text, #2, LineEnding +
-      LineEnding, [rfReplaceAll]);
-    meText.Text := StringReplace(meText.Text, '  ', ' ', [rfReplaceAll]);
+    end;
+    if MessageDlg('Compact all paragraphs not separated by an empty line, ' +
+      'clean the text from double spaces and check the spaces ' +
+      'after the punctuation marks?', mtConfirmation, [mbOK, mbCancel], 0) =
+      mrCancel then
+      Abort;
+    try
+      Screen.Cursor := crHourGlass;
+      Application.ProcessMessages;
+      meText.Text := StringReplace(meText.Text, '[[', #2, [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '[', ' [', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '(', ' (', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, #2, '[[', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '[[', ' [[', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '.', '. ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, ',', ', ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, ';', '; ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, ':', ': ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '!', '! ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, '?', '? ', [rfReplaceAll]);
+      while UTF8Pos(LineEnding + LineEnding + LineEnding, meText.Text) > 0 do
+      begin
+        meText.Text := StringReplace(meText.Text, LineEnding +
+          LineEnding + LineEnding, LineEnding + LineEnding, [rfReplaceAll]);
+      end;
+      meText.Text := StringReplace(meText.Text, LineEnding + LineEnding,
+        #2, [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, LineEnding, ' ', [rfReplaceAll]);
+      meText.Text := StringReplace(meText.Text, #2, LineEnding +
+        LineEnding, [rfReplaceAll]);
+      while UTF8Pos('  ', meText.Text) > 0 do
+      begin
+        meText.Text := StringReplace(meText.Text, '  ', ' ', [rfReplaceAll]);
+      end;
+      meText.Text := StringReplace(meText.Text, LineEnding + ' [[',
+        LineEnding + '[[', [rfReplaceAll]);
+    finally
+      Screen.Cursor := crDefault;
+    end;
   end;
 end;
 
@@ -623,9 +682,10 @@ begin
   // Find first
   if edFind.Text <> '' then
   begin
-    if UTF8Pos(edFind.Text, meText.Text, 1) > 0 then
+    if UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(meText.Text), 1) > 0 then
     begin
-      meText.SelStart := UTF8Pos(edFind.Text, meText.Text, 1) - 1;
+      meText.SelStart := UTF8Pos(UTF8LowerCase(edFind.Text),
+        UTF8LowerCase(meText.Text), 1) - 1;
       meText.SelLength := UTF8Length(edFind.Text);
       meText.SetFocus;
     end
@@ -738,7 +798,7 @@ begin
   if ((edFind.Text <> '') and (edReplace.Text <> '')) then
   begin
     if MessageDlg('Replace all the recurrences of "' + edFind.Text +
-      '"' + LineEnding + 'with "' + edReplace.Text + '" in the current text?',
+      '" with "' + edReplace.Text + '" in the current text?',
       mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
@@ -749,9 +809,9 @@ begin
     i := 1;
     iCount := 0;
     try
-      while UTF8Pos(edFind.Text, stText, i) > 0 do
+      while UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i) > 0 do
       begin
-        i := UTF8Pos(edFind.Text, stText, i);
+        i := UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i);
         stText := UTF8Copy(stText, 1, i - 1) + edReplace.Text +
           UTF8Copy(stText, i + UTF8Length(edFind.Text), UTF8Length(stText));
         i := i + UTF8Length(edReplace.Text);
@@ -1203,13 +1263,90 @@ begin
   end;
 end;
 
+procedure TfmMain.miConcordanceJoinClick(Sender: TObject);
+var
+  i, iPos: integer;
+  blSelection: boolean;
+begin
+  // Join selected words with current word
+  if sgWordList.RowHeights[sgWordList.Row] = 0 then
+  begin
+    Abort;
+  end;
+  if sgWordList.RowCount < 2 then
+  begin
+    MessageDlg('No concordance has been created.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  blSelection := False;
+  sgWordList.Cells[2, sgWordList.Row] := '0';
+  for i := 1 to sgWordList.RowCount - 1 do
+  begin
+    if sgWordList.Cells[2, i] = '1' then
+    begin
+      blSelection := True;
+      Break;
+    end;
+  end;
+  if blSelection = False then
+  begin
+    MessageDlg('No words are selected.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  if MessageDlg('Associate all the recurrences of the selected words ' +
+    'to those of the current word "' + sgWordList.Cells[0, sgWordList.Row] +
+    '"?', mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+  begin
+    Abort;
+  end;
+  for i := 1 to sgWordList.RowCount - 1 do
+  begin
+    if sgWordList.Cells[2, i] = '1' then
+    begin
+      sgWordList.Cells[1, sgWordList.Row] :=
+        IntToStr(StrToInt(sgWordList.Cells[1, sgWordList.Row]) +
+        StrToInt(sgWordList.Cells[1, i]));
+      sgWordList.Cells[3, sgWordList.Row] :=
+        sgWordList.Cells[3, sgWordList.Row] + sgWordList.Cells[3, i];
+      sgWordList.Cells[4, sgWordList.Row] :=
+        sgWordList.Cells[4, sgWordList.Row] + sgWordList.Cells[4, i];
+    end;
+  end;
+  i := 1;
+  iPos := sgWordList.Row;
+  while i < sgWordList.RowCount do
+  begin
+    if sgWordList.Cells[2, i] = '1' then
+    begin
+      sgWordList.DeleteRow(i);
+      if i < iPos then
+      begin
+        iPos := iPos - 1;
+      end;
+    end
+    else
+    begin
+      Inc(i);
+    end;
+  end;
+  sgWordList.Row := iPos;
+  lsContext.Clear;
+  lsContext.Items.Text := CreateContext(sgWordList.Row, True);
+  {$ifdef Win32}
+  // Due to a bug in Windows...
+  if lsContext.Items[0] = '' then
+    lsContext.Items.Delete(0);
+  {$endif}
+  lsContext.ItemIndex := 0;
+end;
+
 procedure TfmMain.miConcordanceRefreshGridClick(Sender: TObject);
 begin
   // Refresh concordance grid
   if blGridConcMod = True then
   begin
-    if MessageDlg('Some changes have been made to the concordance grid.' +
-      LineEnding + 'Do you want to recreate it and loose these changes?',
+    if MessageDlg('Some changes have been made to the concordance grid. ' +
+      'Do you want to recreate it and loose these changes?',
       mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
@@ -1343,11 +1480,146 @@ begin
   CreateStatistic;
 end;
 
+procedure TfmMain.miStatisticSortNameClick(Sender: TObject);
+var
+  iPos1, iPos2, iCol: integer;
+  slRow: TStringList;
+begin
+  // Sort by name the statistic
+  if sgStatistic.RowCount = 0 then
+  begin
+    MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  try
+    slRow := TStringList.Create;
+    for iPos1 := 1 to sgStatistic.RowCount - 2 do
+    begin
+      for iPos2 := 1 to sgStatistic.RowCount - 3 do
+      begin
+        if cbCollatedSort.Checked = True then
+        begin
+          if UTF8CompareStrCollated(sgStatistic.Cells[0, iPos2],
+            sgStatistic.Cells[0, iPos1]) > 0 then
+          begin
+            slRow.Clear;
+            for iCol := 0 to sgStatistic.ColCount - 1 do
+            begin
+              slRow.Add(sgStatistic.Cells[iCol, iPos1]);
+            end;
+            sgStatistic.Rows[iPos1] := sgStatistic.Rows[iPos2];
+            for iCol := 0 to slRow.Count - 1 do
+            begin
+              sgStatistic.Cells[iCol, iPos2] := slRow[iCol];
+            end;
+          end;
+        end
+        else
+        begin
+          if UTF8CompareStr(sgStatistic.Cells[0, iPos2],
+            sgStatistic.Cells[0, iPos1]) > 0 then
+          begin
+            slRow.Clear;
+            for iCol := 0 to sgStatistic.ColCount - 1 do
+            begin
+              slRow.Add(sgStatistic.Cells[iCol, iPos1]);
+            end;
+            sgStatistic.Rows[iPos1] := sgStatistic.Rows[iPos2];
+            for iCol := 0 to slRow.Count - 1 do
+            begin
+              sgStatistic.Cells[iCol, iPos2] := slRow[iCol];
+            end;
+          end;
+        end;
+      end;
+    end;
+  finally
+    slRow.Free;
+  end;
+end;
+
+procedure TfmMain.miStatisticSortFreqClick(Sender: TObject);
+var
+  iPos1, iPos2, iCol: integer;
+  slRow: TStringList;
+begin
+  // Sort by frequency the statistic
+  if sgStatistic.RowCount = 0 then
+  begin
+    MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  try
+    slRow := TStringList.Create;
+    for iPos1 := 1 to sgStatistic.RowCount - 2 do
+    begin
+      for iPos2 := 1 to sgStatistic.RowCount - 3 do
+      begin
+        if StrToInt(sgStatistic.Cells[1, iPos2]) <
+          StrToInt(sgStatistic.Cells[1, iPos1]) then
+        begin
+          slRow.Clear;
+          for iCol := 0 to sgStatistic.ColCount - 1 do
+          begin
+            slRow.Add(sgStatistic.Cells[iCol, iPos1]);
+          end;
+          sgStatistic.Rows[iPos1] := sgStatistic.Rows[iPos2];
+          for iCol := 0 to slRow.Count - 1 do
+          begin
+            sgStatistic.Cells[iCol, iPos2] := slRow[iCol];
+          end;
+        end
+        else
+        if StrToInt(sgStatistic.Cells[1, iPos2]) =
+          StrToInt(sgStatistic.Cells[1, iPos1]) then
+        begin
+          if cbCollatedSort.Checked = True then
+          begin
+            if UTF8CompareStrCollated(sgStatistic.Cells[0, iPos2],
+              sgStatistic.Cells[0, iPos1]) > 0 then
+            begin
+              slRow.Clear;
+              for iCol := 0 to sgStatistic.ColCount - 1 do
+              begin
+                slRow.Add(sgStatistic.Cells[iCol, iPos1]);
+              end;
+              sgStatistic.Rows[iPos1] := sgStatistic.Rows[iPos2];
+              for iCol := 0 to slRow.Count - 1 do
+              begin
+                sgStatistic.Cells[iCol, iPos2] := slRow[iCol];
+              end;
+            end;
+          end
+          else
+          begin
+            if UTF8CompareStr(sgStatistic.Cells[0, iPos2],
+              sgStatistic.Cells[0, iPos1]) > 0 then
+            begin
+              slRow.Clear;
+              for iCol := 0 to sgStatistic.ColCount - 1 do
+              begin
+                slRow.Add(sgStatistic.Cells[iCol, iPos1]);
+              end;
+              sgStatistic.Rows[iPos1] := sgStatistic.Rows[iPos2];
+              for iCol := 0 to slRow.Count - 1 do
+              begin
+                sgStatistic.Cells[iCol, iPos2] := slRow[iCol];
+              end;
+            end;
+          end;
+        end;
+      end;
+    end;
+  finally
+    slRow.Free;
+  end;
+end;
+
 procedure TfmMain.miStatisticSaveClick(Sender: TObject);
 begin
   // Salve statistic
   pcMain.ActivePage := tsStatistic;
-  if sgStatistic.RowCount < 2 then
+  if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('There is no statistic to save.',
       mtWarning, [mbOK], 0);
@@ -1400,17 +1672,22 @@ begin
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
-      if UTF8LowerCase(ExtractFileExt(sdSaveDialog.FileName)) = '.png' then
-      begin
-        ChChart.SaveToFile(TPortableNetworkGraphic, sdSaveDialog.FileName);
-      end
-      else
-      begin
-        chChart.SaveToFile(TJpegImage, sdSaveDialog.FileName);
+      try
+        chChart.Height := 1000;
+        if UTF8LowerCase(ExtractFileExt(sdSaveDialog.FileName)) = '.png' then
+        begin
+          ChChart.SaveToFile(TPortableNetworkGraphic, sdSaveDialog.FileName);
+        end
+        else
+        begin
+          chChart.SaveToFile(TJpegImage, sdSaveDialog.FileName);
+        end;
+      except
+        MessageDlg('It is not possible to save the diagram.',
+          mtWarning, [mbOK], 0);
       end;
-    except
-      MessageDlg('It is not possible to save the diagram.',
-        mtWarning, [mbOK], 0);
+    finally
+      chChart.Height := sbDiagram.Height - 10;
     end;
 end;
 
@@ -1476,9 +1753,9 @@ begin
   if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
     'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix.' +
-      LineEnding + 'Download it from the website of the software:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix.',
+    MessageDlg('No manual available in the folder of WordStatix. ' +
+      'Download it from the website of the software:' + LineEnding +
+      'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -1486,9 +1763,9 @@ begin
   if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
     'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix.' +
-      LineEnding + 'Download it from the website of the software:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix.',
+    MessageDlg('No manual available in the folder of WordStatix. ' +
+      'Download it from the website of the software:' + LineEnding +
+      'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -1497,9 +1774,9 @@ begin
     'wordstatix.app/Contents/MacOS', '', []) + DirectorySeparator +
     'manual-wordstatix.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix.' +
-      LineEnding + 'Download it from the website of the software:' +
-      LineEnding + 'https://sites.google.com/site/wordstatix.',
+    MessageDlg('No manual available in the folder of WordStatix. ' +
+      'Download it from the website of the software:' + LineEnding +
+      'https://sites.google.com/site/wordstatix.',
       mtInformation, [mbOK], 0);
   end;
   {$endif}
@@ -1535,15 +1812,15 @@ begin
       if iEnd < iStart then
       begin
         lbBookmarks.Clear;
-        MessageDlg('A bookmark is not open or closed properly' +
-          LineEnding + 'with double square brackets.', mtWarning, [mbOK], 0);
+        MessageDlg('A bookmark is not open or closed properly ' +
+          'with double square brackets.', mtWarning, [mbOK], 0);
         Exit;
       end
       else if iStart + 50 < iEnd then
       begin
         lbBookmarks.Clear;
-        MessageDlg('A bookmark seems to be too long.' + LineEnding +
-          'Check the text to control that there are' + LineEnding +
+        MessageDlg('A bookmark seems to be too long. ' +
+          'Check the text to control that there are ' +
           'no unwanted double square brackets.', mtWarning, [mbOK], 0);
         Exit;
       end
@@ -1551,8 +1828,8 @@ begin
       if UTF8Pos(LineEnding, UTF8Copy(stText, iStart, iEnd - iStart)) > 0 then
       begin
         lbBookmarks.Clear;
-        MessageDlg('A bookmark seems to be incorrect.' + LineEnding +
-          'Check the text to control that there are' + LineEnding +
+        MessageDlg('A bookmark seems to be incorrect. ' +
+          'Check the text to control that there are ' +
           'no unwanted double square brackets.', mtWarning, [mbOK], 0);
         Exit;
       end
@@ -1586,8 +1863,8 @@ begin
     end;
     if blCommasSpaces = True then
     begin
-      MessageDlg('Bookmarks cannot contain commas, spaces or be an asterisk.' +
-        LineEnding + 'The incorrect bookmarks have been changed accordingly.',
+      MessageDlg('Bookmarks cannot contain commas, spaces or be an asterisk. ' +
+        'The incorrect bookmarks have been changed accordingly.',
         mtWarning, [mbOK], 0);
     end;
     if slBookmark.Count > 1 then
@@ -1601,7 +1878,7 @@ begin
           begin
             lbBookmarks.Clear;
             MessageDlg('The bookmark "' + slBookmark[i] +
-              '" is used more than once.' + LineEnding +
+              '" is used more than once. ' +
               'Check the text and make all its recurrences unique.',
               mtWarning, [mbOK], 0);
             Exit;
@@ -1626,12 +1903,12 @@ begin
   // Find next word
   if edFind.Text <> '' then
   begin
-    if UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
-      meText.SelLength + 1) > 0 then
+    if UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(meText.Text),
+      meText.SelStart + meText.SelLength + 1) > 0 then
     begin
       Result := True;
-      meText.SelStart := UTF8Pos(edFind.Text, meText.Text, meText.SelStart +
-        meText.SelLength + 1) - 1;
+      meText.SelStart := UTF8Pos(UTF8LowerCase(edFind.Text),
+        UTF8LowerCase(meText.Text), meText.SelStart + meText.SelLength + 1) - 1;
       meText.SelLength := UTF8Length(edFind.Text);
       meText.SetFocus;
     end
@@ -2196,34 +2473,37 @@ begin
     myText := StringReplace(myText, ',', ', ', [rfReplaceAll]);
     myText := StringReplace(myText, ' ,', ',', [rfReplaceAll]);
     while Pos('  ', myText) > 0 do
+    begin
       myText := StringReplace(myText, '  ', ' ', [rfReplaceAll]);
-    if myText[Length(myText)] = ' ' then
-      myText := Copy(myText, 0, Length(myText) - 1);
-    if myText[1] = ' ' then
-      myText := Copy(myText, 2, Length(myText));
-    // If something wrong happens later...
-    Result := myText;
-    // Remove duplicates
-    try
-      WordsList := TStringList.Create;
-      WordCurr := TStringList.Create;
-      WordCurr.Text := StringReplace(myText, ', ', LineEnding, [rfReplaceAll]);
-      WordCurr.Sort;
-      for i := 0 to WordCurr.Count - 1 do
-      begin
-        if WordsList.IndexOf(WordCurr[i]) < 0 then
-        begin
-          if WordCurr[i] <> '' then
-            WordsList.Add(WordCurr[i]);
-        end;
-      end;
-      myText := WordsList.Text;
-    finally
-      WordsList.Free;
-      WordCurr.Free;
     end;
-    Result := StringReplace(myText, LineEnding, ', ', [rfReplaceAll]);
-    Result := UTF8Copy(Result, 1, UTF8Length(Result) - 2);
+    while UTF8Copy(myText, 1, 1) = ' ' do
+    begin
+      myText := UTF8Copy(myText, 2, UTF8Length(myText));
+    end;
+    Result := myText;
+    if myText <> '' then
+    begin
+      try
+        WordsList := TStringList.Create;
+        WordCurr := TStringList.Create;
+        WordCurr.Text := StringReplace(myText, ', ', LineEnding, [rfReplaceAll]);
+        WordCurr.Sort;
+        for i := 0 to WordCurr.Count - 1 do
+        begin
+          if WordsList.IndexOf(WordCurr[i]) < 0 then
+          begin
+            if WordCurr[i] <> '' then
+              WordsList.Add(WordCurr[i]);
+          end;
+        end;
+        myText := WordsList.Text;
+        Result := StringReplace(myText, LineEnding, ', ', [rfReplaceAll]);
+        Result := UTF8Copy(Result, 1, UTF8Length(Result) - 2);
+      finally
+        WordsList.Free;
+        WordCurr.Free;
+      end;
+    end;
   end
   else
   begin
@@ -2401,6 +2681,7 @@ begin
       MessageDlg('No words are selected in the concordance gird.',
         mtWarning, [mbOK], 0);
       pcMain.ActivePage := tsConcordance;
+      sgWordList.SetFocus;
     end
     else
     begin
@@ -2436,7 +2717,7 @@ begin
   chChartBarSeries3.Active := False;
   chChartBarSeries4.Active := False;
   chChartBarSeries5.Active := False;
-  if sgStatistic.RowCount < 2 then
+  if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
@@ -2545,6 +2826,18 @@ begin
   finally
     slCheckDouble.Free;
   end;
+  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
+    stDiagTitle);
+  if stDiagTitle = '' then
+  begin
+    chChart.Title.Visible := False;
+  end
+  else
+  begin
+    chChart.Title.Text.Clear;
+    chChart.Title.Text.Add(stDiagTitle);
+    chChart.Title.Visible := True;
+  end;
   clColor1 := $8080FF;
   clColor2 := $80FF80;
   clColor3 := $FFB980;
@@ -2560,8 +2853,6 @@ begin
   chChartBarSeries3.Title := '';
   chChartBarSeries4.Title := '';
   chChartBarSeries5.Title := '';
-  chChart.Width := sbDiagram.Width - 3;
-  chChart.Height := sbDiagram.Height - 10;
   if cbComboDiag1.Text <> '' then
   begin
     for iRowGridStat := 1 to sgStatistic.RowCount - 1 do
@@ -2744,7 +3035,7 @@ begin
   chChartBarSeries3.Active := False;
   chChartBarSeries4.Active := False;
   chChartBarSeries5.Active := False;
-  if sgStatistic.RowCount < 2 then
+  if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
@@ -2770,11 +3061,21 @@ begin
       mtWarning, [mbOK], 0);
     Abort;
   end;
+  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
+    stDiagTitle);
+  if stDiagTitle = '' then
+  begin
+    chChart.Title.Visible := False;
+  end
+  else
+  begin
+    chChart.Title.Text.Clear;
+    chChart.Title.Text.Add(stDiagTitle);
+    chChart.Title.Visible := True;
+  end;
   clColor1 := $8080FF;
   csChartSource1.DataPoints.Clear;
   chChartBarSeries1.Title := '';
-  chChart.Width := sbDiagram.Width - 3;
-  chChart.Height := sbDiagram.Height - 10;
   iBottomAx := 1;
   for iColGridStat := 2 to sgStatistic.ColCount - 1 do
   begin
@@ -2798,8 +3099,9 @@ end;
 
 procedure TfmMain.CreateDiagramAllWordsNoBook;
 var
-  iRowGridStat, iBottomAx: integer;
+  iRowGridStat, iColGridStat, iBottomAx, iTot, i: integer;
   clColor1: TColor;
+  blSelBookmark: boolean;
 begin
   // Create diagram of all words with no bookmarks
   chChart.Visible := False;
@@ -2808,23 +3110,61 @@ begin
   chChartBarSeries3.Active := False;
   chChartBarSeries4.Active := False;
   chChartBarSeries5.Active := False;
-  if sgStatistic.RowCount < 2 then
+  if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
     Abort;
   end;
+  if clDiagBookmark.Count = 0 then
+  begin
+    MessageDlg('No bookmark available.',
+      mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  blSelBookmark := False;
+  for i := 0 to clDiagBookmark.Count - 1 do
+  begin
+    if clDiagBookmark.Checked[i] = True then
+    begin
+      blSelBookmark := True;
+    end;
+  end;
+  if blSelBookmark = False then
+  begin
+    MessageDlg('At least one bookmark must be selected.',
+      mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
+    stDiagTitle);
+  if stDiagTitle = '' then
+  begin
+    chChart.Title.Visible := False;
+  end
+  else
+  begin
+    chChart.Title.Text.Clear;
+    chChart.Title.Text.Add(stDiagTitle);
+    chChart.Title.Visible := True;
+  end;
   clColor1 := $8080FF;
   csChartSource1.DataPoints.Clear;
   chChartBarSeries1.Title := '';
-  chChart.Width := sbDiagram.Width - 3;
-  chChart.Height := sbDiagram.Height - 10;
   iBottomAx := 1;
   for iRowGridStat := 1 to sgStatistic.RowCount - 2 do
   begin
+    iTot := 0;
+    for iColGridStat := 2 to sgStatistic.ColCount - 1 do
+    begin
+      if clDiagBookmark.Checked[iColGridStat - 2] = True then
+      begin
+        iTot := iTot + StrToInt(sgStatistic.Cells[iColGridStat, iRowGridStat]);
+      end;
+    end;
     csChartSource1.Add(
       iBottomAx,
-      StrToInt(sgStatistic.Cells[1, iRowGridStat]),
+      iTot,
       sgStatistic.Cells[0, iRowGridStat],
       clColor1);
     Inc(iBottomAx);
@@ -2851,11 +3191,14 @@ begin
   miConcordanceAddSkip.Enabled := False;
   miConcordanceDelCont.Enabled := False;
   miConcordanceRemove.Enabled := False;
+  miConcordanceJoin.Enabled := False;
   miConcordanceRefreshGrid.Enabled := False;
   miConcordanceOpenSkip.Enabled := False;
   miConcordanceSaveSkip.Enabled := False;
   miConcordanceSave.Enabled := False;
   miStatisticCreate.Enabled := False;
+  miStatisticSortName.Enabled := False;
+  miStatisticSortFreq.Enabled := False;
   miStatisticSave.Enabled := False;
   miDiagramSingleWordsBook.Enabled := False;
   miDiagramAllWordNoBook.Enabled := False;
@@ -2885,11 +3228,14 @@ begin
   miConcordanceAddSkip.Enabled := True;
   miConcordanceDelCont.Enabled := True;
   miConcordanceRemove.Enabled := True;
+  miConcordanceJoin.Enabled := True;
   miConcordanceRefreshGrid.Enabled := True;
   miConcordanceOpenSkip.Enabled := True;
   miConcordanceSaveSkip.Enabled := True;
   miConcordanceSave.Enabled := True;
   miStatisticCreate.Enabled := True;
+  miStatisticSortName.Enabled := True;
+  miStatisticSortFreq.Enabled := True;
   miStatisticSave.Enabled := True;
   miDiagramAllWordNoBook.Enabled := True;
   miDiagramAllWordsBook.Enabled := True;

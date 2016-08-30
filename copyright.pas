@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.5
+// WordStatix 1.6
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 
@@ -41,6 +41,7 @@ type
     lbCopyrightName: TLabel;
     lbSite: TLabel;
     meCopyrightText: TMemo;
+    shShape: TShape;
     tmAlarmForm: TTimer;
     procedure bnCopyrightClick(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);

@@ -561,10 +561,10 @@ object fmMain: TfmMain
     Height = 735
     Top = 10
     Width = 1218
-    ActivePage = tsConcordance
+    ActivePage = tsFile
     Align = alClient
     BorderSpacing.Top = 10
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 1
     OnChange = pcMainChange
     OnChanging = pcMainChanging
@@ -757,7 +757,7 @@ object fmMain: TfmMain
         DefaultRowHeight = 25
         FixedCols = 0
         Flat = True
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goColSizing, goEditing, goRowSelect, goThumbTracking, goSmoothScroll, goScrollKeepVisible]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goColSizing, goEditing, goRowSelect, goThumbTracking, goSmoothScroll, goSelectionActive]
         RowCount = 1
         TabOrder = 0
         OnKeyDown = sgWordListKeyDown
@@ -922,6 +922,7 @@ object fmMain: TfmMain
         RowCount = 0
         TabOrder = 0
         OnPrepareCanvas = sgStatisticPrepareCanvas
+        OnSelectCell = sgStatisticSelectCell
       end
     end
     object tsDiagram: TTabSheet
@@ -1082,7 +1083,7 @@ object fmMain: TfmMain
         TabOrder = 1
         object chChart: TChart
           Left = 0
-          Height = 652
+          Height = 654
           Top = 0
           Width = 600
           AllowZoom = False
@@ -1104,10 +1105,11 @@ object fmMain: TfmMain
           Foot.Font.Color = clBlue
           Legend.Visible = True
           Title.Brush.Color = clBtnFace
-          Title.Font.Color = clBlue
+          Title.Font.Color = clBlack
           Title.Text.Strings = (
             'Diagram made with WordStatix'
           )
+          Title.Visible = True
           Toolset = ctChartToolset
           Anchors = [akTop, akLeft, akBottom]
           Visible = False
@@ -1235,6 +1237,14 @@ object fmMain: TfmMain
         ShortCut = 16459
         OnClick = miConcordanceRemoveClick
       end
+      object miConcordanceJoin: TMenuItem
+        Caption = 'Associate selected words'
+        ShortCut = 16458
+        OnClick = miConcordanceJoinClick
+      end
+      object miLine4a: TMenuItem
+        Caption = '-'
+      end
       object miConcordanceRefreshGrid: TMenuItem
         Caption = 'Refresh concordance grid'
         ShortCut = 24661
@@ -1275,7 +1285,20 @@ object fmMain: TfmMain
         ShortCut = 16468
         OnClick = miStatisticCreateClick
       end
-      object miLine6: TMenuItem
+      object miLine6a: TMenuItem
+        Caption = '-'
+      end
+      object miStatisticSortName: TMenuItem
+        Caption = 'Sort by name'
+        ShortCut = 16473
+        OnClick = miStatisticSortNameClick
+      end
+      object miStatisticSortFreq: TMenuItem
+        Caption = 'Sort by recurrences'
+        ShortCut = 24665
+        OnClick = miStatisticSortFreqClick
+      end
+      object miLine6b: TMenuItem
         Caption = '-'
       end
       object miStatisticSave: TMenuItem
