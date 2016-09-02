@@ -20,18 +20,18 @@
     <VersionInfo>
       <UseVersionInfo Value="True"/>
       <MajorVersionNr Value="1"/>
-      <MinorVersionNr Value="6"/>
+      <MinorVersionNr Value="7"/>
       <StringTable Comments="Free software to create concordances" LegalCopyright="Massimo Nardello 2016" ProductVersion="WordStatix"/>
     </VersionInfo>
     <CustomData Count="13">
       <Item0 Name="lazpackager/copyright" Value="2016 Massimo Nardello"/>
       <Item1 Name="lazpackager/deb/ppa" Value="ppa:johndoe/use-your-own"/>
       <Item2 Name="lazpackager/deb/series" Value="xerus"/>
-      <Item3 Name="lazpackager/deb/tpl_changelog" Value="wordstatix (1.6.0.0) xerus; urgency=low
+      <Item3 Name="lazpackager/deb/tpl_changelog" Value="wordstatix (1.7.0.0) xerus; urgency=low
 
-  * Original version 1.6.0.0 packaged with lazdebian
+  * Original version 1.7.0.0 packaged with lazdebian
 
- -- Massimo Nardello &lt;ms.nardello@gmail.com>  Sun, 29 Aug 2016 11:00:00 +0200
+ -- Massimo Nardello &lt;ms.nardello@gmail.com>  Sun, 1 Set 2016 11:00:00 +0200
 
 
 "/>
@@ -39,7 +39,7 @@
 Maintainer: Massimo Nardello &lt;ms.nardello@gmail.com>
 Section: Office
 Priority: optional
-Standards-Version: 1.6.0.0
+Standards-Version: 1.7.0.0
 
 Package: wordstatix
 Architecture: any

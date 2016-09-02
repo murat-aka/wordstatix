@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.6
+// WordStatix 1.7
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
   StdCtrls, ExtCtrls, ComCtrls, Menus, LazUTF8, TAGraph, TASources, TASeries,
-  TATools, IniFiles, Clipbrd, zipper, LCLIntf, CheckLst, strutils;
+  TATools, IniFiles, Clipbrd, zipper, LCLIntf, CheckLst, Types, LazFileUtils;
 
 type
 
@@ -44,6 +44,7 @@ type
 
   TfmMain = class(TForm)
     apAppProp: TApplicationProperties;
+    bnDeselConc: TButton;
     bnFindFirst: TButton;
     bnFindNext: TButton;
     bnReplace: TButton;
@@ -71,6 +72,7 @@ type
     edFltStart: TEdit;
     edFltEnd: TEdit;
     edFind: TEdit;
+    edLocate: TEdit;
     edReplace: TEdit;
     edWordsCont: TEdit;
     lbDiagBookmark: TLabel;
@@ -80,6 +82,7 @@ type
     lbBookmarks: TListBox;
     lbDiag4: TLabel;
     lbDiag5: TLabel;
+    lbLocate: TLabel;
     lbReplace: TLabel;
     lbFind: TLabel;
     lbFltStart: TLabel;
@@ -89,50 +92,53 @@ type
     lbNoWord: TLabel;
     csChartSource1: TListChartSource;
     lsContext: TListBox;
+    miLine1: TMenuItem;
+    miFileSaveConc: TMenuItem;
+    miFileOpenConc: TMenuItem;
     miStatisticSortFreq: TMenuItem;
     miStatisticSortName: TMenuItem;
-    miLine6a: TMenuItem;
-    miLine4a: TMenuItem;
+    miLine9: TMenuItem;
+    miLine5: TMenuItem;
     miConcordanceJoin: TMenuItem;
     miDiagramShowGrid: TMenuItem;
     miDiagramAllWordNoBook: TMenuItem;
     miConcordanceRefreshGrid: TMenuItem;
-    miLine4b: TMenuItem;
+    miLine6: TMenuItem;
     miDiagramAllWordsBook: TMenuItem;
-    miLine9: TMenuItem;
+    miLine13: TMenuItem;
     miDiagramShowVal: TMenuItem;
     miDiaZoomIn: TMenuItem;
     miDiaZoomOut: TMenuItem;
     miDiaZoomNormal: TMenuItem;
-    miLine10: TMenuItem;
-    miLine8: TMenuItem;
+    miLine14: TMenuItem;
+    miLine12: TMenuItem;
     miDiagramSave: TMenuItem;
     miDiagramSingleWordsBook: TMenuItem;
     miDiagram: TMenuItem;
     miConcordanceRemove: TMenuItem;
     miManual: TMenuItem;
-    miLine7: TMenuItem;
+    miLine15: TMenuItem;
     miFileNew: TMenuItem;
     miStatisticSave: TMenuItem;
     miStatisticCreate: TMenuItem;
-    miLine6b: TMenuItem;
+    miLine10: TMenuItem;
     miStatistic: TMenuItem;
     miFileSaveAs: TMenuItem;
-    miLine5: TMenuItem;
+    miLine8: TMenuItem;
     miConcordanceDelCont: TMenuItem;
-    miLine1: TMenuItem;
+    miLine2: TMenuItem;
     miFileUpdBookmark: TMenuItem;
     miFileSetBookmark: TMenuItem;
     miConcordanceOpenSkip: TMenuItem;
     miConcordanceSaveSkip: TMenuItem;
-    miLine3: TMenuItem;
+    miLine4: TMenuItem;
     miConcodanceShowSelected: TMenuItem;
     miFileSave: TMenuItem;
-    miLine4: TMenuItem;
-    miConcordanceSave: TMenuItem;
+    miLine7: TMenuItem;
+    miConcordanceSaveRep: TMenuItem;
     miCopyrightForm: TMenuItem;
     miCopyright: TMenuItem;
-    miLine2: TMenuItem;
+    miLine3: TMenuItem;
     miConcordanceAddSkip: TMenuItem;
     miConcordanceCreate: TMenuItem;
     miFileOpen: TMenuItem;
@@ -148,6 +154,7 @@ type
     pnListBookmark: TPanel;
     pnTextBottom: TPanel;
     pcMain: TPageControl;
+    rgCondFlt: TRadioGroup;
     rgSortBy: TRadioGroup;
     sbDiagram: TScrollBox;
     sdSaveDialog: TSaveDialog;
@@ -162,11 +169,13 @@ type
     tsConcordance: TTabSheet;
     udWordsCont: TUpDown;
     procedure apAppPropException(Sender: TObject; E: Exception);
+    procedure bnDeselConcClick(Sender: TObject);
     procedure bnFindFirstClick(Sender: TObject);
     procedure bnFindNextClick(Sender: TObject);
     procedure bnReplaceAllClick(Sender: TObject);
     procedure bnReplaceClick(Sender: TObject);
     procedure bnDeselDiagClick(Sender: TObject);
+    procedure cbCollatedSortChange(Sender: TObject);
     procedure cbComboDiag2KeyDown(Sender: TObject; var Key: word;
       Shift: TShiftState);
     procedure cbComboDiag3KeyDown(Sender: TObject; var Key: word;
@@ -179,6 +188,7 @@ type
       Shift: TShiftState);
     procedure edFltEndExit(Sender: TObject);
     procedure edFltStartExit(Sender: TObject);
+    procedure edLocateKeyPress(Sender: TObject; var Key: char);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
@@ -186,6 +196,7 @@ type
     procedure lbBookmarksMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: integer);
     procedure meSkipListExit(Sender: TObject);
+    procedure meTextChange(Sender: TObject);
     procedure meTextKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure meTextMouseWheel(Sender: TObject; Shift: TShiftState;
       WheelDelta: integer; MousePos: TPoint; var Handled: boolean);
@@ -193,10 +204,12 @@ type
     procedure miConcordanceAddSkipClick(Sender: TObject);
     procedure miConcordanceCreateClick(Sender: TObject);
     procedure miConcordanceJoinClick(Sender: TObject);
+    procedure miFileOpenConcClick(Sender: TObject);
     procedure miConcordanceOpenSkipClick(Sender: TObject);
     procedure miConcordanceRefreshGridClick(Sender: TObject);
     procedure miConcordanceRemoveClick(Sender: TObject);
-    procedure miConcordanceSaveClick(Sender: TObject);
+    procedure miFileSaveConcClick(Sender: TObject);
+    procedure miConcordanceSaveRepClick(Sender: TObject);
     procedure miConcordanceDelContClick(Sender: TObject);
     procedure miConcordanceSaveSkipClick(Sender: TObject);
     procedure miCopyrightFormClick(Sender: TObject);
@@ -223,6 +236,7 @@ type
     procedure miStatisticSortNameClick(Sender: TObject);
     procedure pcMainChange(Sender: TObject);
     procedure pcMainChanging(Sender: TObject; var AllowChange: boolean);
+    procedure rgSortBySelectionChanged(Sender: TObject);
     procedure sgStatisticPrepareCanvas(Sender: TObject; aCol, aRow: integer;
       aState: TGridDrawState);
     procedure sgStatisticSelectCell(Sender: TObject; aCol, aRow: integer;
@@ -246,7 +260,9 @@ type
     procedure DisableMenuItems;
     procedure EnableMenuItems;
     function FindNextWord(blMessage: boolean): boolean;
-    procedure SaveConcordance(stFileName: string);
+    procedure OpenConcordance;
+    procedure SaveConcordance;
+    procedure SaveReport(stFileName: string);
     procedure CreateBookmarks(blSetCursor: boolean);
     procedure SortWordFreq(var arWordList: array of TRecWordList;
       flField: shortint);
@@ -269,6 +285,8 @@ var
   blGridConcMod: boolean = False;
   blStopConcordance: boolean = False;
   blConInProc: boolean = False;
+  blTextModSave: boolean = False;
+  blTextModConc: boolean = False;
   stDiagTitle: string;
 
 implementation
@@ -300,6 +318,7 @@ begin
   lbBookmarks.ScrollWidth := 0;
   lsContext.ScrollWidth := 0;
   clDiagBookmark.ScrollWidth := 0;
+  miFileSave.Enabled := False;
   {$ifdef Linux}
   myHomeDir := GetEnvironmentVariable('HOME') + DirectorySeparator +
     '.config' + DirectorySeparator + 'wordstatix' + DirectorySeparator;
@@ -322,11 +341,11 @@ begin
   begin
     CreateDirUTF8(myHomeDir);
   end;
-  if FileExists(myHomeDir + 'skipwords') then
+  if FileExistsUTF8(myHomeDir + 'skipwords') then
   begin
     meSkipList.Lines.LoadFromFile(myHomeDir + 'skipwords');
   end;
-  if FileExists(myHomeDir + myConfigFile) then
+  if FileExistsUTF8(myHomeDir + myConfigFile) then
     try
       MyIni := TIniFile.Create(myHomeDir + myConfigFile);
       if MyIni.ReadString('wordstatix', 'maximize', '') = 'true' then
@@ -503,6 +522,84 @@ begin
   end;
 end;
 
+procedure TfmMain.rgSortBySelectionChanged(Sender: TObject);
+begin
+  // Changed settings for concordance
+  // also for rgCondFlt
+  blTextModConc := True;
+end;
+
+procedure TfmMain.cbCollatedSortChange(Sender: TObject);
+begin
+  // Changed settings for concordance
+  // also for all other Edit and Memo components
+  blTextModConc := True;
+end;
+
+procedure TfmMain.sgWordListKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+begin
+  // Select and deselect the word
+  if key = 32 then
+  begin
+    sgWordList.Col := 0;
+    if sgWordList.Cells[2, sgWordList.Row] = '0' then
+    begin
+      sgWordList.Cells[2, sgWordList.Row] := '1';
+    end
+    else
+    begin
+      sgWordList.Cells[2, sgWordList.Row] := '0';
+    end;
+    if sgWordList.Row < sgWordList.RowCount - 1 then
+    begin
+      sgWordList.Row := sgWordList.Row + 1;
+    end;
+  end;
+end;
+
+procedure TfmMain.bnDeselConcClick(Sender: TObject);
+var
+  i: integer;
+begin
+  // Select and deselect all words
+  if sgWordList.RowCount > 1 then
+  begin
+    if sgWordList.Cells[2, 1] = '1' then
+    begin
+      for i := 1 to sgWordList.RowCount - 1 do
+      begin
+        sgWordList.Cells[2, i] := '0';
+      end;
+    end
+    else
+    begin
+      for i := 1 to sgWordList.RowCount - 1 do
+      begin
+        sgWordList.Cells[2, i] := '1';
+      end;
+    end;
+  end;
+end;
+
+procedure TfmMain.sgWordListSelection(Sender: TObject; aCol, aRow: integer);
+begin
+  // Create the list of context
+  if sgWordList.RowCount > 1 then
+  begin
+    if sgWordList.RowHeights[sgWordList.Row] > 0 then
+    begin
+      lsContext.Clear;
+      lsContext.Items.Text := CreateContext(sgWordList.Row, True);
+      {$ifdef Win32}
+      // Due to a bug in Windows...
+      if lsContext.Items[0] = '' then
+        lsContext.Items.Delete(0);
+      {$endif}
+      lsContext.ItemIndex := 0;
+    end;
+  end;
+end;
+
 procedure TfmMain.sgStatisticPrepareCanvas(Sender: TObject;
   aCol, aRow: integer; aState: TGridDrawState);
 begin
@@ -527,53 +624,6 @@ begin
   begin
     CanSelect := False;
   end;
-end;
-
-procedure TfmMain.sgWordListKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
-begin
-  // Select and deselect the word
-  if key = 32 then
-  begin
-    sgWordList.Col := 0;
-    if sgWordList.Cells[2, sgWordList.Row] = '0' then
-    begin
-      sgWordList.Cells[2, sgWordList.Row] := '1';
-    end
-    else
-    begin
-      sgWordList.Cells[2, sgWordList.Row] := '0';
-    end;
-    if sgWordList.Row < sgWordList.RowCount - 1 then
-    begin
-      sgWordList.Row := sgWordList.Row + 1;
-    end;
-  end;
-end;
-
-procedure TfmMain.sgWordListSelection(Sender: TObject; aCol, aRow: integer);
-begin
-  // Create the list of context
-  if sgWordList.RowCount > 1 then
-  begin
-    if sgWordList.RowHeights[sgWordList.Row] > 0 then
-    begin
-      lsContext.Clear;
-      lsContext.Items.Text := CreateContext(sgWordList.Row, True);
-      {$ifdef Win32}
-      // Due to a bug in Windows...
-      if lsContext.Items[0] = '' then
-        lsContext.Items.Delete(0);
-      {$endif}
-      lsContext.ItemIndex := 0;
-    end;
-  end;
-end;
-
-procedure TfmMain.tsDiagramResize(Sender: TObject);
-begin
-  // Resize the diagram
-  chChart.Width := sbDiagram.Width - 3;
-  chChart.Height := sbDiagram.Height - 10;
 end;
 
 procedure TfmMain.udWordsContChanging(Sender: TObject; var AllowChange: boolean);
@@ -601,16 +651,68 @@ begin
   meSkipList.Text := CleanField(meSkipList.Text);
 end;
 
+procedure TfmMain.meTextChange(Sender: TObject);
+begin
+  // Set the text as modified
+  blTextModSave := True;
+  miFileSave.Enabled := blTextModSave;
+  blTextModConc := True;
+end;
+
 procedure TfmMain.edFltStartExit(Sender: TObject);
 begin
   // Clean filter start with on exit
   edFltStart.Text := CleanField(edFltStart.Text);
 end;
 
+procedure TfmMain.edLocateKeyPress(Sender: TObject; var Key: char);
+var
+  i: integer;
+begin
+  // Locate word in concordance
+  if key = #13 then
+  begin
+    if edLocate.Text <> '' then
+    begin
+      for i := 1 to sgWordList.RowCount - 1 do
+      begin
+        if UTF8LowerCase(UTF8Copy(sgWordList.Cells[0, i], 1,
+          UTF8Length(edLocate.Text))) = UTF8LowerCase(edLocate.Text) then
+        begin
+          if sgWordList.RowHeights[i] > 0 then
+          begin
+            sgWordList.Row := i;
+          end;
+          Break;
+        end;
+      end;
+    end;
+  end;
+end;
+
 procedure TfmMain.edFltEndExit(Sender: TObject);
 begin
   // Clean filter end on exit
   edFltEnd.Text := CleanField(edFltEnd.Text);
+end;
+
+procedure TfmMain.meTextMouseWheel(Sender: TObject; Shift: TShiftState;
+  WheelDelta: integer; MousePos: TPoint; var Handled: boolean);
+begin
+  // Change Zoom with mouse weel
+  if Shift = [ssCtrl] then
+  begin
+    if WheelDelta > 0 then
+    begin
+      if meText.Font.Size < 48 then
+        meText.Font.Size := meText.Font.Size + 1;
+    end
+    else
+    begin
+      if meText.Font.Size > 6 then
+        meText.Font.Size := meText.Font.Size - 1;
+    end;
+  end;
 end;
 
 procedure TfmMain.meTextKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
@@ -728,6 +830,51 @@ begin
   end;
 end;
 
+procedure TfmMain.bnReplaceAllClick(Sender: TObject);
+var
+  stText: string;
+  i, iCount: integer;
+begin
+  // Replace all
+  if ((edFind.Text <> '') and (edReplace.Text <> '')) then
+  begin
+    if MessageDlg('Replace all the recurrences of "' + edFind.Text +
+      '" with "' + edReplace.Text + '" in the current text?',
+      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    begin
+      Abort;
+    end;
+    Screen.Cursor := crHourGlass;
+    Application.ProcessMessages;
+    stText := meText.Text;
+    i := 1;
+    iCount := 0;
+    try
+      while UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i) > 0 do
+      begin
+        i := UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i);
+        stText := UTF8Copy(stText, 1, i - 1) + edReplace.Text +
+          UTF8Copy(stText, i + UTF8Length(edFind.Text), UTF8Length(stText));
+        i := i + UTF8Length(edReplace.Text);
+        Inc(iCount);
+        Application.ProcessMessages;
+      end;
+      meText.Text := stText;
+    finally
+      Screen.Cursor := crDefault;
+    end;
+    MessageDlg('The word looked for has been replaced ' + IntToStr(iCount) +
+      ' times.', mtInformation, [mbOK], 0);
+  end;
+end;
+
+procedure TfmMain.tsDiagramResize(Sender: TObject);
+begin
+  // Resize the diagram
+  chChart.Width := sbDiagram.Width - 3;
+  chChart.Height := sbDiagram.Height - 10;
+end;
+
 procedure TfmMain.bnDeselDiagClick(Sender: TObject);
 begin
   // Select and deselect all bookmarks
@@ -789,63 +936,6 @@ begin
   end;
 end;
 
-procedure TfmMain.bnReplaceAllClick(Sender: TObject);
-var
-  stText: string;
-  i, iCount: integer;
-begin
-  // Replace all
-  if ((edFind.Text <> '') and (edReplace.Text <> '')) then
-  begin
-    if MessageDlg('Replace all the recurrences of "' + edFind.Text +
-      '" with "' + edReplace.Text + '" in the current text?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
-    begin
-      Abort;
-    end;
-    Screen.Cursor := crHourGlass;
-    Application.ProcessMessages;
-    stText := meText.Text;
-    i := 1;
-    iCount := 0;
-    try
-      while UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i) > 0 do
-      begin
-        i := UTF8Pos(UTF8LowerCase(edFind.Text), UTF8LowerCase(stText), i);
-        stText := UTF8Copy(stText, 1, i - 1) + edReplace.Text +
-          UTF8Copy(stText, i + UTF8Length(edFind.Text), UTF8Length(stText));
-        i := i + UTF8Length(edReplace.Text);
-        Inc(iCount);
-        Application.ProcessMessages;
-      end;
-      meText.Text := stText;
-    finally
-      Screen.Cursor := crDefault;
-    end;
-    MessageDlg('The word looked for has been replaced ' + IntToStr(iCount) +
-      ' times.', mtInformation, [mbOK], 0);
-  end;
-end;
-
-procedure TfmMain.meTextMouseWheel(Sender: TObject; Shift: TShiftState;
-  WheelDelta: integer; MousePos: TPoint; var Handled: boolean);
-begin
-  // Change Zoom with mouse weel
-  if Shift = [ssCtrl] then
-  begin
-    if WheelDelta > 0 then
-    begin
-      if meText.Font.Size < 48 then
-        meText.Font.Size := meText.Font.Size + 1;
-    end
-    else
-    begin
-      if meText.Font.Size > 6 then
-        meText.Font.Size := meText.Font.Size - 1;
-    end;
-  end;
-end;
-
 // ********************************************************** //
 // ****************** Events of menu items ****************** //
 // ********************************************************** //
@@ -855,9 +945,12 @@ begin
   // New
   if meText.Text <> '' then
   begin
-    if MessageDlg('Create a new text and a new concordance?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg('Create a new text and a new concordance ' +
+      'closing the existing ones?', mtConfirmation, [mbOK, mbCancel], 0) =
+      mrCancel then
+    begin
       Abort;
+    end;
   end;
   SetLength(arWordList, 0);
   SetLength(arWordTextual, 0);
@@ -883,6 +976,8 @@ begin
   cbComboDiag4.Clear;
   cbComboDiag5.Clear;
   clDiagBookmark.Clear;
+  pcMain.ActivePage := tsFile;
+  sbStatusBar.SimpleText := 'No active concordance.';
 end;
 
 procedure TfmMain.miFileOpenClick(Sender: TObject);
@@ -893,11 +988,14 @@ var
 begin
   // Open file
   pcMain.ActivePage := tsFile;
-  if meText.Text <> '' then
+  if ((meText.Text <> '') and (blTextModSave = True)) then
   begin
-    if MessageDlg('Open a new text replacing the existing one?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg('The current text has been changed but has not been saved. ' +
+      'Reject the changes and open a new text?', mtConfirmation,
+      [mbOK, mbCancel], 0) = mrCancel then
+    begin
       Abort;
+    end;
   end;
   SetLength(arWordList, 0);
   SetLength(arWordTextual, 0);
@@ -933,12 +1031,16 @@ begin
       begin
         meText.Lines.LoadFromFile(odOpenDialog.FileName);
         stFileName := odOpenDialog.FileName;
+        blTextModSave := False;
+        miFileSave.Enabled := blTextModSave;
         fmMain.Caption := 'WordStatix - ' + stFileName;
       end
       else if UTF8LowerCase(ExtractFileExt(odOpenDialog.FileName)) = '' then
       begin
         meText.Lines.LoadFromFile(odOpenDialog.FileName);
         stFileName := odOpenDialog.FileName;
+        blTextModSave := False;
+        miFileSave.Enabled := blTextModSave;
         fmMain.Caption := 'WordStatix - ' + stFileName;
       end
       else if UTF8LowerCase(ExtractFileExt(odOpenDialog.FileName)) = '.odt' then
@@ -967,6 +1069,8 @@ begin
           stFileOrig.Text := StringReplace(stFileOrig.Text, '&apos;',
             #39, [rfReplaceAll]);
           meText.Text := CleanXML(stFileOrig.Text);
+          blTextModSave := False;
+          miFileSave.Enabled := blTextModSave;
           DeleteFileUTF8(GetTempDir + DirectorySeparator + 'content.xml');
         finally
           myZip.Free;
@@ -1041,6 +1145,8 @@ begin
                 '>[endnote: ' + IntToStr(i) + '] ', []);
             end;
             meText.Text := meText.Text + CleanXML(stFileOrig.Text) + LineEnding;
+            blTextModSave := False;
+            miFileSave.Enabled := blTextModSave;
           end;
           if DirectoryExistsUTF8(GetTempDir + 'word') = True then
           begin
@@ -1070,6 +1176,8 @@ begin
     try
       meText.Lines.SaveToFile(stFileName);
       sbStatusBar.SimpleText := 'The text has been saved.';
+      blTextModSave := False;
+      miFileSave.Enabled := blTextModSave;
       fmMain.Caption := 'WordStatix - ' + stFileName;
     except
       MessageDlg('It is not possible to save the selected file.',
@@ -1093,11 +1201,25 @@ begin
       stFileName := sdSaveDialog.FileName;
       meText.Lines.SaveToFile(stFileName);
       sbStatusBar.SimpleText := 'The text has been saved.';
+      blTextModSave := False;
+      miFileSave.Enabled := blTextModSave;
       fmMain.Caption := 'WordStatix - ' + stFileName;
     except
       MessageDlg('It is not possible to save the selected file.',
         mtWarning, [mbOK], 0);
     end;
+end;
+
+procedure TfmMain.miFileOpenConcClick(Sender: TObject);
+begin
+  // Open concordance
+  OpenConcordance;
+end;
+
+procedure TfmMain.miFileSaveConcClick(Sender: TObject);
+begin
+  // Save concordance
+  SaveConcordance;
 end;
 
 procedure TfmMain.miFileSetBookmarkClick(Sender: TObject);
@@ -1329,6 +1451,7 @@ begin
       Inc(i);
     end;
   end;
+  blGridConcMod := True;
   sgWordList.Row := iPos;
   lsContext.Clear;
   lsContext.Items.Text := CreateContext(sgWordList.Row, True);
@@ -1343,10 +1466,11 @@ end;
 procedure TfmMain.miConcordanceRefreshGridClick(Sender: TObject);
 begin
   // Refresh concordance grid
+  pcMain.ActivePage := tsConcordance;
   if blGridConcMod = True then
   begin
     if MessageDlg('Some changes have been made to the concordance grid. ' +
-      'Do you want to recreate it and loose these changes?',
+      'Do you want to reject them and recreate the list of words?',
       mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
@@ -1452,9 +1576,9 @@ begin
     end;
 end;
 
-procedure TfmMain.miConcordanceSaveClick(Sender: TObject);
+procedure TfmMain.miConcordanceSaveRepClick(Sender: TObject);
 begin
-  // Export concordance to file
+  // Export report to file
   pcMain.ActivePage := tsConcordance;
   if sgWordList.RowCount < 2 then
   begin
@@ -1466,9 +1590,10 @@ begin
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
-      SaveConcordance(sdSaveDialog.FileName);
+      SaveReport(sdSaveDialog.FileName);
+      sbStatusBar.SimpleText := 'The report has been saved.';
     except
-      MessageDlg('It is not possible to save the concordance.',
+      MessageDlg('It is not possible to save the report.',
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1631,6 +1756,7 @@ begin
   if sdSaveDialog.Execute then
     try
       sgStatistic.SaveToCSVFile(sdSaveDialog.FileName);
+      sbStatusBar.SimpleText := 'The statistic has been saved.';
     except
       MessageDlg('It is not possible to save the selected file.',
         mtWarning, [mbOK], 0);
@@ -1682,6 +1808,7 @@ begin
         begin
           chChart.SaveToFile(TJpegImage, sdSaveDialog.FileName);
         end;
+        sbStatusBar.SimpleText := 'The diagram has been saved.';
       except
         MessageDlg('It is not possible to save the diagram.',
           mtWarning, [mbOK], 0);
@@ -1812,6 +1939,10 @@ begin
       if iEnd < iStart then
       begin
         lbBookmarks.Clear;
+        if blSetCursor = True then
+        begin
+          Screen.Cursor := crDefault;
+        end;
         MessageDlg('A bookmark is not open or closed properly ' +
           'with double square brackets.', mtWarning, [mbOK], 0);
         Exit;
@@ -1819,6 +1950,10 @@ begin
       else if iStart + 50 < iEnd then
       begin
         lbBookmarks.Clear;
+        if blSetCursor = True then
+        begin
+          Screen.Cursor := crDefault;
+        end;
         MessageDlg('A bookmark seems to be too long. ' +
           'Check the text to control that there are ' +
           'no unwanted double square brackets.', mtWarning, [mbOK], 0);
@@ -1828,6 +1963,10 @@ begin
       if UTF8Pos(LineEnding, UTF8Copy(stText, iStart, iEnd - iStart)) > 0 then
       begin
         lbBookmarks.Clear;
+        if blSetCursor = True then
+        begin
+          Screen.Cursor := crDefault;
+        end;
         MessageDlg('A bookmark seems to be incorrect. ' +
           'Check the text to control that there are ' +
           'no unwanted double square brackets.', mtWarning, [mbOK], 0);
@@ -1861,12 +2000,6 @@ begin
         blCommasSpaces := True;
       end;
     end;
-    if blCommasSpaces = True then
-    begin
-      MessageDlg('Bookmarks cannot contain commas, spaces or be an asterisk. ' +
-        'The incorrect bookmarks have been changed accordingly.',
-        mtWarning, [mbOK], 0);
-    end;
     if slBookmark.Count > 1 then
     begin
       for i := 0 to slBookmark.Count - 2 do
@@ -1874,9 +2007,12 @@ begin
         for n := i + 1 to slBookmark.Count - 1 do
         begin
           if UTF8LowerCase(slBookmark[i]) = UTF8LowerCase(slBookmark[n]) then
-
           begin
             lbBookmarks.Clear;
+            if blSetCursor = True then
+            begin
+              Screen.Cursor := crDefault;
+            end;
             MessageDlg('The bookmark "' + slBookmark[i] +
               '" is used more than once. ' +
               'Check the text and make all its recurrences unique.',
@@ -1891,10 +2027,22 @@ begin
     begin
       lbBookmarks.Items.Add(slBookmark[i]);
     end;
+    if blCommasSpaces = True then
+    begin
+      if blSetCursor = True then
+      begin
+        Screen.Cursor := crDefault;
+      end;
+      MessageDlg('Bookmarks cannot contain commas, spaces or be an asterisk. ' +
+        'The incorrect bookmarks have been changed accordingly.',
+        mtWarning, [mbOK], 0);
+    end;
   finally
     slBookmark.Free;
     if blSetCursor = True then
+    begin
       Screen.Cursor := crDefault;
+    end;
   end;
 end;
 
@@ -1927,9 +2075,11 @@ end;
 procedure TfmMain.CreateConc(stStartText: string);
 var
   slNoWord: TStringList;
-  stText, stWord, stBookmark: string;
-  i, iTestNum, iLocWord: integer;
+  stWord, stBookmark: string;
+  slText: TStringList;
+  i, iTestNum: integer;
   flNewWord: boolean;
+  flTmpFile: TextFile;
 
   // Create concordance
   procedure EvalStopProcess; inline;
@@ -1965,6 +2115,7 @@ var
 begin
   if meText.Text = '' then
   begin
+    pcMain.ActivePage := tsFile;
     MessageDlg('No text available.', mtWarning, [mbOK], 0);
     Abort;
   end
@@ -2008,27 +2159,26 @@ begin
   stBookmark := '*';
   sgWordList.RowCount := 1;
   lsContext.Clear;
-  stText := ' ' + stStartText + ' ';
-  EvalStopProcess;
-  stText := StringReplace(stText, #9, ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  stText := StringReplace(stText, #10, ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  stText := StringReplace(stText, #13, ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  stText := StringReplace(stText, #39, #39 + ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  stText := StringReplace(stText, #96, #39 + ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  stText := StringReplace(stText, '’', #39 + ' ', [rfReplaceAll]);
-  EvalStopProcess;
-  while UTF8Pos('  ', stText) > 0 do
+  stStartText := StringReplace(stStartText, #9, ' ', [rfReplaceAll]);
+  stStartText := StringReplace(stStartText, #39, #39 + ' ', [rfReplaceAll]);
+  stStartText := StringReplace(stStartText, #96, #39 + ' ', [rfReplaceAll]);
+  stStartText := StringReplace(stStartText, '’', #39 + ' ', [rfReplaceAll]);
+  while UTF8Pos('  ', stStartText) > 0 do
   begin
-    stText := StringReplace(stText, '  ', ' ', [rfReplaceAll]);
+    stStartText := StringReplace(stStartText, '  ', ' ', [rfReplaceAll]);
   end;
   EvalStopProcess;
   try
-    iWordsStartTot := WordCount(stText, [' ']);
+    slText := TStringList.Create;
+    slText.Delimiter := ' ';
+    slText.QuoteChar := ' ';
+    slText.DelimitedText := stStartText;
+    sltext.SaveToFile(GetTempDir + DirectorySeparator + 'wrdstxtmp');
+    iWordsStartTot := slText.Count;
+  finally
+    slText.Free;
+  end;
+  try
     slNoWord := TStringList.Create;
     slNoWord.CaseSensitive := False;
     slNoWord.CommaText := meSkipList.Text;
@@ -2037,9 +2187,11 @@ begin
       'Analyzed words: ' + FormatFloat('#,##0', iWordsTotal) +
       ' of ' + FormatFloat('#,##0', iWordsStartTot) + ' - Unique words found: ' +
       FormatFloat('#,##0', iWordsUsed) + '.';
-    for iLocWord := 1 to iWordsStartTot do
+    AssignFile(flTmpFile, GetTempDir + DirectorySeparator + 'wrdstxtmp');
+    Reset(flTmpFile);
+    while not EOF(flTmpFile) do
     begin
-      stWord := ExtractWord(iLocWord, stText, [' ']);
+      ReadLn(flTmpFile, stWord);
       if UTF8Pos('[[', stWord) > 0 then
       begin
         stBookmark := UTF8Copy(stWord, UTF8Pos('[[', stWord) + 2,
@@ -2053,6 +2205,9 @@ begin
         Application.ProcessMessages;
         Continue;
       end;
+      SetLength(arWordTextual, Length(arWordTextual) + 1);
+      arWordTextual[Length(arWordTextual) - 1].stRecWordTextual := stWord;
+      Inc(iWordsTotal);
       for i := 33 to 38 do
       begin
         stWord := StringReplace(stWord, Chr(i), '', [rfReplaceAll]);
@@ -2084,12 +2239,11 @@ begin
         if TryStrToInt(stWord, iTestNum) = True then
         begin
           Application.ProcessMessages;
+          SetLength(arWordTextual, Length(arWordTextual) - 1);
+          Dec(iWordsTotal);
           Continue;
         end;
       end;
-      SetLength(arWordTextual, Length(arWordTextual) + 1);
-      arWordTextual[Length(arWordTextual) - 1].stRecWordTextual := stWord;
-      Inc(iWordsTotal);
       if slNoWord.IndexOf(stWord) < 0 then
       begin
         if ((stWord <> ' ') and (stWord <> '') and (stWord <> #39) and
@@ -2136,7 +2290,7 @@ begin
           end;
         end;
       end;
-      if iWordsStartTot > 5000 then
+      if iWordsStartTot > 10000 then
       begin
         if iWordsTotal mod 5000 = 0 then
         begin
@@ -2152,12 +2306,18 @@ begin
     end;
     CompileGrid;
   finally
+    CloseFile(flTmpFile);
     slNoWord.Free;
     sgWordList.Enabled := True;
     EnableMenuItems;
     blConInProc := False;
     Screen.Cursor := crDefault;
   end;
+  if FileExistsUTF8(GetTempDir + DirectorySeparator + 'wrdstxtmp') then
+  begin
+    DeleteFileUTF8(GetTempDir + DirectorySeparator + 'wrdstxtmp');
+  end;
+  blTextModConc := False;
   ttEnd := Now;
   sbStatusBar.SimpleText :=
     'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
@@ -2208,7 +2368,7 @@ begin
           Continue;
         end;
         if ((i = iPos - 1) or (i = iPos)) then
-          stContext := stContext + arWordTextual[i].stRecWordTextual + '   '
+          stContext := stContext + arWordTextual[i].stRecWordTextual + ' • '
         else
           stContext := stContext + arWordTextual[i].stRecWordTextual + ' ';
       end;
@@ -2285,15 +2445,18 @@ begin
   begin
     sgWordList.RowCount := 1;
     lsContext.Clear;
-    sbStatusBar.SimpleText := 'No active concordance.';
-    Abort;
+    sbStatusBar.SimpleText :=
+      'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
+      ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
+      ' - Concordance done in ' + FormatDateTime('hh:nn:ss',
+      ttEnd - ttStart) + '.';
   end
   else
   begin
     try
       Screen.Cursor := crHourGlass;
       sgWordList.Enabled := False;
-      sbStatusBar.SimpleText := 'List of words in processing, please, wait.';
+      sbStatusBar.SimpleText := 'List of words in sorting, please, wait.';
       Application.ProcessMessages;
       miConcodanceShowSelected.Checked := False;
       SortWordFreq(arWordList, rgSortBy.ItemIndex);
@@ -2333,6 +2496,7 @@ function TfmMain.CheckFilter(stWord: string): boolean;
 var
   slFltStart, slFltEnd: TStringList;
   i: integer;
+  blStart, blEnd: boolean;
 begin
   // Check the filtr on words
   Result := False;
@@ -2342,6 +2506,8 @@ begin
   end
   else
   begin
+    blStart := False;
+    blEnd := False;
     if edFltStart.Text <> '' then
     begin
       try
@@ -2352,7 +2518,7 @@ begin
           if UTF8LowerCase(UTF8Copy(stWord, 1, UTF8Length(slFltStart[i]))) =
             UTF8LowerCase(slFltStart[i]) then
           begin
-            Result := True;
+            blStart := True;
             Break;
           end;
         end;
@@ -2371,12 +2537,42 @@ begin
             UTF8Length(slFltEnd[i]) + 1, UTF8Length(stWord))) =
             UTF8LowerCase(slFltEnd[i]) then
           begin
-            Result := True;
+            blEnd := True;
             Break;
           end;
         end;
       finally
         slFltEnd.Free;
+      end;
+    end;
+    if rgCondFlt.ItemIndex = 0 then
+    begin
+      if ((blStart = True) or (blEnd = True)) then
+      begin
+        Result := True;
+      end
+      else
+      begin
+        Result := False;
+      end;
+    end
+    else
+    begin
+      if edFltStart.Text = '' then
+      begin
+        blStart := True;
+      end;
+      if edFltEnd.Text = '' then
+      begin
+        blEnd := True;
+      end;
+      if ((blStart = True) and (blEnd = True)) then
+      begin
+        Result := True;
+      end
+      else
+      begin
+        Result := False;
       end;
     end;
   end;
@@ -2511,7 +2707,278 @@ begin
   end;
 end;
 
-procedure TfmMain.SaveConcordance(stFileName: string);
+procedure TfmMain.SaveConcordance;
+var
+  flConc: TextFile;
+  i: integer;
+  stConditions: string;
+begin
+  // Save concordance
+  if meText.Text = '' then
+  begin
+    MessageDlg('No text available.', mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  if sgWordList.RowCount = 1 then
+  begin
+    MessageDlg('No concordance available.',
+      mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  if blTextModConc = True then
+  begin
+    MessageDlg('The text or the settings of the software useful to create ' +
+      'the concordance have been changed after the last concordance ' +
+      'was processed. Recreate it to be able to save it along with its text.',
+      mtWarning, [mbOK], 0);
+    Abort;
+  end;
+  sdSaveDialog.Filter := 'WordStatix files|*.wsx|All files|*';
+  sdSaveDialog.DefaultExt := '.wsx';
+  sdSaveDialog.FileName := '';
+  if sdSaveDialog.Execute then
+  begin
+    try
+      try
+        Screen.Cursor := crHourGlass;
+        AssignFile(flConc, sdSaveDialog.FileName);
+        Rewrite(flConc);
+        WriteLn(flConc, '[WordStatixText]');
+        for i := 0 to meText.Lines.Count - 1 do
+        begin
+          WriteLn(flConc, meText.Lines[i]);
+        end;
+        WriteLn(flConc, '[WordStatixList]');
+        for i := Length(arWordList) - 1 downto 0 do
+        begin
+          WriteLn(flConc, arWordList[i].stRecWord + #9 +
+            IntToStr(arWordList[i].iRecFreq) + #9 + arWordList[i].stRecWordPos +
+            #9 + arWordList[i].stRecBookPos);
+        end;
+        WriteLn(flConc, '[WordStatixSeries]');
+        for i := Length(arWordTextual) - 1 downto 0 do
+        begin
+          WriteLn(flConc, arWordTextual[i].stRecWordTextual);
+        end;
+        WriteLn(flConc, '[WordStatixConditions]');
+        stConditions := '';
+        stConditions := IntToStr(rgSortBy.ItemIndex) + #9;
+        if cbCollatedSort.Checked = True then
+        begin
+          stConditions := stConditions + 'CST' + #9;
+        end
+        else
+        begin
+          stConditions := stConditions + 'CSF' + #9;
+        end;
+        if cbSkipNumbers.Checked = True then
+        begin
+          stConditions := stConditions + 'SNT' + #9;
+        end
+        else
+        begin
+          stConditions := stConditions + 'SNF' + #9;
+        end;
+        stConditions := stConditions + meSkipList.Lines[0] + #9;
+        stConditions := stConditions + edFltStart.Text + #9;
+        stConditions := stConditions + edFltEnd.Text + #9;
+        stConditions := stConditions + IntToStr(rgCondFlt.ItemIndex) + #9;
+        WriteLn(flConc, stCOnditions);
+        WriteLn(flConc, '[WordStatixResults]');
+        WriteLn(flConc, IntToStr(iWordsTotal) + #9 + IntToStr(iWordsUsed));
+        sbStatusBar.SimpleText := 'The concordance has been saved.';
+      finally
+        CloseFile(flConc);
+        Screen.Cursor := crDefault;
+      end;
+    except
+      MessageDlg('It is not possibile to save the concordance.',
+        mtWarning, [mbOK], 0);
+    end;
+  end;
+end;
+
+procedure TfmMain.OpenConcordance;
+var
+  flConc: TextFile;
+  stLine: string;
+  iSection: smallint;
+begin
+  // Open concordance
+  pcMain.ActivePage := tsFile;
+  if ((meText.Text <> '') and (blTextModSave = True)) then
+  begin
+    if MessageDlg('The current text has been changed but has not been saved. ' +
+      'Reject the changes and open a new concordance with its text?',
+      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    begin
+      Abort;
+    end;
+  end;
+  SetLength(arWordList, 0);
+  SetLength(arWordTextual, 0);
+  meText.Clear;
+  lbBookmarks.Clear;
+  edFind.Clear;
+  edReplace.Clear;
+  sgWordList.RowCount := 1;
+  lsContext.Clear;
+  edFltStart.Clear;
+  edFltEnd.Clear;
+  sgStatistic.RowCount := 0;
+  sgStatistic.ColCount := 0;
+  chChart.Visible := False;
+  chChartBarSeries1.Active := False;
+  chChartBarSeries2.Active := False;
+  chChartBarSeries3.Active := False;
+  chChartBarSeries4.Active := False;
+  chChartBarSeries5.Active := False;
+  cbComboDiag1.Clear;
+  cbComboDiag2.Clear;
+  cbComboDiag3.Clear;
+  cbComboDiag4.Clear;
+  cbComboDiag5.Clear;
+  clDiagBookmark.Clear;
+  odOpenDialog.Filter := 'WS concordances|*.wsx|All files|*';
+  odOpenDialog.DefaultExt := '.wsx';
+  odOpenDialog.FileName := '';
+  if odOpenDialog.Execute then
+  begin
+    try
+      Screen.Cursor := crHourGlass;
+      ttStart := Now;
+      iSection := -1;
+      AssignFile(flConc, odOpenDialog.FileName);
+      Reset(flConc);
+      try
+        while not EOF(flConc) do
+        begin
+          ReadLn(flConc, stLine);
+          if stLine = '[WordStatixText]' then
+          begin
+            iSection := 0;
+          end
+          else if stLine = '[WordStatixList]' then
+          begin
+            iSection := 1;
+          end
+          else if stLine = '[WordStatixSeries]' then
+          begin
+            iSection := 2;
+          end
+          else if stLine = '[WordStatixConditions]' then
+          begin
+            iSection := 3;
+          end
+          else if stLine = '[WordStatixResults]' then
+          begin
+            iSection := 4;
+          end
+          else if iSection = 0 then
+          begin
+            meText.Lines.Add(stLine);
+          end
+          else if iSection = 1 then
+          begin
+            SetLength(arWordList, Length(arWordList) + 1);
+            arWordList[Length(arWordList) - 1].stRecWord :=
+              UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            arWordList[Length(arWordList) - 1].iRecFreq :=
+              StrToInt(UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1));
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            arWordList[Length(arWordList) - 1].stRecWordPos :=
+              UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            arWordList[Length(arWordList) - 1].stRecBookPos :=
+              UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+          end
+          else if iSection = 2 then
+          begin
+            SetLength(arWordTextual, Length(arWordTextual) + 1);
+            arWordTextual[Length(arWordTextual) - 1].stRecWordTextual := stLine;
+          end
+          else if iSection = 3 then
+          begin
+            rgSortBy.ItemIndex :=
+              StrToInt(UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1));
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            if UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1) = 'CST' then
+            begin
+              cbCollatedSort.Checked := True;
+            end
+            else if UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1) = 'CSF' then
+            begin
+              cbCollatedSort.Checked := False;
+            end;
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            if UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1) = 'SNT' then
+            begin
+              cbSkipNumbers.Checked := True;
+            end
+            else
+            if UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1) = 'SNF' then
+            begin
+              cbSkipNumbers.Checked := False;
+            end;
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            meSkipList.Text := UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            edFltStart.Text := UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            edFltEnd.Text := UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1);
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            rgCondFlt.ItemIndex :=
+              StrToInt(UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1));
+          end
+          else if iSection = 4 then
+          begin
+            iWordsTotal := StrToInt(UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1));
+            stLine := UTF8Copy(stLine, UTF8Pos(#9, stLine) + 1,
+              UTF8Length(stLine));
+            iWordsUsed := StrToInt(UTF8Copy(stLine, 1, UTF8Pos(#9, stLine) - 1));
+          end
+          else
+          begin
+            MessageDlg('The selected file was not created ' +
+              'with WordStatix, and so cannot be opened.',
+              mtWarning, [mbOK], 0);
+            Exit;
+          end;
+        end;
+      finally
+        CloseFile(flConc);
+        Screen.Cursor := crDefault;
+      end;
+      CompileGrid;
+      blTextModSave := False;
+      miFileSave.Enabled := blTextModSave;
+      stFileName := ExtractFileNameWithoutExt(odOpenDialog.FileName) + '.txt';
+      fmMain.Caption := 'WordStatix - ' + stFileName;
+      pcMain.ActivePage := tsConcordance;
+      ttEnd := Now;
+      sbStatusBar.SimpleText :=
+        'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
+        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
+        ' - Concordance loaded in ' + FormatDateTime('hh:nn:ss',
+        ttEnd - ttStart) + '.';
+    except
+      MessageDlg('It is not possibile to open the concordance.',
+        mtWarning, [mbOK], 0);
+    end;
+  end;
+end;
+
+procedure TfmMain.SaveReport(stFileName: string);
 var
   ConcFile: TextFile;
   i: integer;
@@ -2615,6 +3082,7 @@ begin
   // Create statistic
   if sgWordList.RowCount = 1 then
   begin
+    pcMain.ActivePage := tsConcordance;
     MessageDlg('No concordance available.',
       mtWarning, [mbOK], 0);
     Abort;
@@ -2719,6 +3187,7 @@ begin
   chChartBarSeries5.Active := False;
   if sgStatistic.RowCount = 0 then
   begin
+    pcMain.ActivePage := tsStatistic;
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
     Abort;
@@ -3037,6 +3506,7 @@ begin
   chChartBarSeries5.Active := False;
   if sgStatistic.RowCount = 0 then
   begin
+    pcMain.ActivePage := tsStatistic;
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
     Abort;
@@ -3112,6 +3582,7 @@ begin
   chChartBarSeries5.Active := False;
   if sgStatistic.RowCount = 0 then
   begin
+    pcMain.ActivePage := tsStatistic;
     MessageDlg('No active statistic.',
       mtWarning, [mbOK], 0);
     Abort;
@@ -3187,6 +3658,8 @@ begin
   miFileSetBookmark.Enabled := False;
   miFileUpdBookmark.Enabled := False;
   miConcordanceCreate.Enabled := False;
+  miFileOpenConc.Enabled := False;
+  miFileSaveConc.Enabled := False;
   miConcodanceShowSelected.Enabled := False;
   miConcordanceAddSkip.Enabled := False;
   miConcordanceDelCont.Enabled := False;
@@ -3195,7 +3668,7 @@ begin
   miConcordanceRefreshGrid.Enabled := False;
   miConcordanceOpenSkip.Enabled := False;
   miConcordanceSaveSkip.Enabled := False;
-  miConcordanceSave.Enabled := False;
+  miConcordanceSaveRep.Enabled := False;
   miStatisticCreate.Enabled := False;
   miStatisticSortName.Enabled := False;
   miStatisticSortFreq.Enabled := False;
@@ -3212,6 +3685,8 @@ begin
   meSkipList.ReadOnly := True;
   edFltStart.ReadOnly := True;
   edFltEnd.ReadOnly := True;
+  edLocate.ReadOnly := True;
+  bnDeselConc.Enabled := False;
 end;
 
 procedure TfmMain.EnableMenuItems;
@@ -3219,11 +3694,13 @@ begin
   // Enable menu items
   miFileNew.Enabled := True;
   miFileOpen.Enabled := True;
-  miFileSave.Enabled := True;
+  miFileSave.Enabled := blTextModSave;
   miFileSaveAs.Enabled := True;
   miFileSetBookmark.Enabled := True;
   miFileUpdBookmark.Enabled := True;
   miConcordanceCreate.Enabled := True;
+  miFileOpenConc.Enabled := True;
+  miFileSaveConc.Enabled := True;
   miConcodanceShowSelected.Enabled := True;
   miConcordanceAddSkip.Enabled := True;
   miConcordanceDelCont.Enabled := True;
@@ -3232,7 +3709,7 @@ begin
   miConcordanceRefreshGrid.Enabled := True;
   miConcordanceOpenSkip.Enabled := True;
   miConcordanceSaveSkip.Enabled := True;
-  miConcordanceSave.Enabled := True;
+  miConcordanceSaveRep.Enabled := True;
   miStatisticCreate.Enabled := True;
   miStatisticSortName.Enabled := True;
   miStatisticSortFreq.Enabled := True;
@@ -3249,6 +3726,8 @@ begin
   meSkipList.ReadOnly := False;
   edFltStart.ReadOnly := False;
   edFltEnd.ReadOnly := False;
+  edLocate.ReadOnly := False;
+  bnDeselConc.Enabled := True;
 end;
 
 end.

@@ -1,11 +1,11 @@
 object fmMain: TfmMain
-  Left = 342
-  Height = 791
-  Top = 172
-  Width = 1218
+  Left = 391
+  Height = 680
+  Top = 191
+  Width = 1000
   Caption = 'WordStatix'
-  ClientHeight = 765
-  ClientWidth = 1218
+  ClientHeight = 654
+  ClientWidth = 1000
   Constraints.MinHeight = 600
   Constraints.MinWidth = 1000
   Icon.Data = {
@@ -551,16 +551,16 @@ object fmMain: TfmMain
   object sbStatusBar: TStatusBar
     Left = 0
     Height = 20
-    Top = 745
-    Width = 1218
+    Top = 634
+    Width = 1000
     Panels = <>
     SimpleText = 'No active concordance'
   end
   object pcMain: TPageControl
     Left = 0
-    Height = 735
+    Height = 624
     Top = 10
-    Width = 1218
+    Width = 1000
     ActivePage = tsFile
     Align = alClient
     BorderSpacing.Top = 10
@@ -570,17 +570,18 @@ object fmMain: TfmMain
     OnChanging = pcMainChanging
     object tsFile: TTabSheet
       Caption = 'File'
-      ClientHeight = 703
-      ClientWidth = 1208
+      ClientHeight = 592
+      ClientWidth = 990
       object meText: TMemo
         Left = 180
-        Height = 626
+        Height = 515
         Top = 5
-        Width = 1028
+        Width = 810
         Align = alClient
         BorderSpacing.Left = 5
         BorderSpacing.Top = 5
         Font.Height = -19
+        OnChange = meTextChange
         OnKeyDown = meTextKeyDown
         OnMouseWheel = meTextMouseWheel
         ParentFont = False
@@ -591,12 +592,12 @@ object fmMain: TfmMain
       object pnTextBottom: TPanel
         Left = 0
         Height = 72
-        Top = 631
-        Width = 1208
+        Top = 520
+        Width = 990
         Align = alBottom
         BevelOuter = bvNone
         ClientHeight = 72
-        ClientWidth = 1208
+        ClientWidth = 990
         TabOrder = 1
         object lbFind: TLabel
           Left = 14
@@ -677,18 +678,18 @@ object fmMain: TfmMain
       end
       object pnListBookmark: TPanel
         Left = 0
-        Height = 631
+        Height = 520
         Top = 0
         Width = 170
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 631
+        ClientHeight = 520
         ClientWidth = 170
         ParentColor = False
         TabOrder = 2
         object lbBookmarks: TListBox
           Left = 0
-          Height = 626
+          Height = 515
           Top = 5
           Width = 170
           Align = alClient
@@ -703,30 +704,32 @@ object fmMain: TfmMain
       end
       object spText: TSplitter
         Left = 170
-        Height = 631
+        Height = 520
         Top = 0
         Width = 5
       end
     end
     object tsConcordance: TTabSheet
       Caption = 'Concordance'
-      ClientHeight = 703
-      ClientWidth = 1208
+      ClientHeight = 592
+      ClientWidth = 990
       object meSkipList: TMemo
-        Left = 554
-        Height = 64
-        Top = 194
-        Width = 634
+        Left = 530
+        Height = 75
+        Top = 178
+        Width = 440
         Anchors = [akTop, akLeft, akRight]
+        OnChange = cbCollatedSortChange
         OnExit = meSkipListExit
         ScrollBars = ssAutoVertical
-        TabOrder = 6
+        TabOrder = 8
+        WantReturns = False
       end
       object sgWordList: TStringGrid
         Left = 20
-        Height = 388
+        Height = 313
         Top = 20
-        Width = 516
+        Width = 484
         AutoEdit = False
         Columns = <        
           item
@@ -764,7 +767,7 @@ object fmMain: TfmMain
         OnSelection = sgWordListSelection
       end
       object rgSortBy: TRadioGroup
-        Left = 552
+        Left = 528
         Height = 116
         Top = 20
         Width = 161
@@ -784,12 +787,13 @@ object fmMain: TfmMain
           'Recurrences'
           'Words'
         )
-        TabOrder = 1
+        OnSelectionChanged = rgSortBySelectionChanged
+        TabOrder = 3
       end
       object lbNoWord: TLabel
-        Left = 554
+        Left = 530
         Height = 18
-        Top = 169
+        Top = 153
         Width = 289
         Caption = 'Words to skip (separated by commas)'
         FocusControl = meSkipList
@@ -806,27 +810,27 @@ object fmMain: TfmMain
       end
       object lsContext: TListBox
         Left = 20
-        Height = 230
+        Height = 119
         Top = 456
-        Width = 1168
+        Width = 950
         Anchors = [akTop, akLeft, akRight, akBottom]
         ItemHeight = 0
-        ScrollWidth = 1166
-        TabOrder = 9
+        ScrollWidth = 948
+        TabOrder = 12
         TopIndex = -1
       end
       object edWordsCont: TEdit
-        Left = 747
+        Left = 723
         Height = 35
         Top = 45
         Width = 48
         NumbersOnly = True
         ReadOnly = True
-        TabOrder = 2
+        TabOrder = 4
         Text = '6'
       end
       object udWordsCont: TUpDown
-        Left = 795
+        Left = 771
         Height = 35
         Top = 45
         Width = 25
@@ -835,11 +839,11 @@ object fmMain: TfmMain
         Min = 2
         OnChanging = udWordsContChanging
         Position = 6
-        TabOrder = 3
+        TabOrder = 5
         Wrap = False
       end
       object lbWordsCont: TLabel
-        Left = 747
+        Left = 723
         Height = 18
         Top = 20
         Width = 128
@@ -848,67 +852,122 @@ object fmMain: TfmMain
         ParentColor = False
       end
       object lbFltStart: TLabel
-        Left = 554
+        Left = 530
         Height = 18
         Top = 273
-        Width = 372
-        Caption = 'Only words starting with (separated by commas)'
+        Width = 334
+        Caption = 'Words starting with (separated by commas)'
         FocusControl = edFltStart
         ParentColor = False
       end
       object lbFltEnd: TLabel
-        Left = 554
+        Left = 530
         Height = 18
         Top = 348
-        Width = 366
-        Caption = 'Only words ending with (separated by commas)'
+        Width = 328
+        Caption = 'Words ending with (separated by commas)'
         FocusControl = edFltEnd
         ParentColor = False
       end
       object edFltStart: TEdit
-        Left = 552
+        Left = 528
         Height = 35
         Top = 298
-        Width = 634
+        Width = 344
         Anchors = [akTop, akLeft, akRight]
+        OnChange = cbCollatedSortChange
         OnExit = edFltStartExit
-        TabOrder = 7
+        TabOrder = 9
       end
       object edFltEnd: TEdit
-        Left = 554
+        Left = 530
         Height = 35
         Top = 373
-        Width = 634
+        Width = 342
         Anchors = [akTop, akLeft, akRight]
+        OnChange = cbCollatedSortChange
         OnExit = edFltEndExit
-        TabOrder = 8
+        TabOrder = 10
       end
       object cbCollatedSort: TCheckBox
-        Left = 744
+        Left = 720
         Height = 23
         Top = 87
         Width = 135
         Caption = 'Advanced sort'
-        TabOrder = 4
+        OnChange = cbCollatedSortChange
+        TabOrder = 6
       end
       object cbSkipNumbers: TCheckBox
-        Left = 742
+        Left = 718
         Height = 23
         Top = 113
         Width = 132
         Caption = 'Skip numbers'
-        TabOrder = 5
+        OnChange = cbCollatedSortChange
+        TabOrder = 7
+      end
+      object bnDeselConc: TButton
+        Left = 316
+        Height = 30
+        Top = 378
+        Width = 188
+        Caption = 'Select and unselect'
+        OnClick = bnDeselConcClick
+        TabOrder = 2
+      end
+      object edLocate: TEdit
+        Left = 20
+        Height = 35
+        Top = 373
+        Width = 268
+        AutoSelect = False
+        OnKeyPress = edLocateKeyPress
+        TabOrder = 1
+      end
+      object lbLocate: TLabel
+        Left = 20
+        Height = 18
+        Top = 348
+        Width = 91
+        Caption = 'Locate word'
+        FocusControl = edFltEnd
+        ParentColor = False
+      end
+      object rgCondFlt: TRadioGroup
+        Left = 888
+        Height = 110
+        Top = 298
+        Width = 82
+        Anchors = [akTop, akRight]
+        AutoFill = True
+        ChildSizing.LeftRightSpacing = 6
+        ChildSizing.EnlargeHorizontal = crsHomogenousChildResize
+        ChildSizing.EnlargeVertical = crsHomogenousChildResize
+        ChildSizing.ShrinkHorizontal = crsScaleChilds
+        ChildSizing.ShrinkVertical = crsScaleChilds
+        ChildSizing.Layout = cclLeftToRightThenTopToBottom
+        ChildSizing.ControlsPerLine = 1
+        ClientHeight = 108
+        ClientWidth = 80
+        ItemIndex = 0
+        Items.Strings = (
+          'Or'
+          'And'
+        )
+        OnSelectionChanged = rgSortBySelectionChanged
+        TabOrder = 11
       end
     end
     object tsStatistic: TTabSheet
       Caption = 'Statistic'
-      ClientHeight = 703
-      ClientWidth = 1208
+      ClientHeight = 592
+      ClientWidth = 990
       object sgStatistic: TStringGrid
         Left = 0
-        Height = 703
+        Height = 592
         Top = 0
-        Width = 1208
+        Width = 1143
         Align = alClient
         AutoEdit = False
         ColCount = 0
@@ -918,7 +977,7 @@ object fmMain: TfmMain
         FixedRows = 0
         Flat = True
         HeaderHotZones = []
-        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goRowSelect, goThumbTracking, goDblClickAutoSize, goSmoothScroll, goScrollKeepVisible, goFixedColSizing]
+        Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goDrawFocusSelected, goColSizing, goThumbTracking, goDblClickAutoSize, goSmoothScroll, goScrollKeepVisible, goFixedColSizing]
         RowCount = 0
         TabOrder = 0
         OnPrepareCanvas = sgStatisticPrepareCanvas
@@ -927,17 +986,17 @@ object fmMain: TfmMain
     end
     object tsDiagram: TTabSheet
       Caption = 'Diagram'
-      ClientHeight = 703
-      ClientWidth = 1208
+      ClientHeight = 592
+      ClientWidth = 990
       OnResize = tsDiagramResize
       object pnDiagram: TPanel
         Left = 0
-        Height = 703
+        Height = 592
         Top = 0
         Width = 220
         Align = alLeft
         BevelOuter = bvNone
-        ClientHeight = 703
+        ClientHeight = 592
         ClientWidth = 220
         Constraints.MinWidth = 220
         TabOrder = 0
@@ -1045,7 +1104,7 @@ object fmMain: TfmMain
         end
         object clDiagBookmark: TCheckListBox
           Left = 12
-          Height = 286
+          Height = 175
           Top = 364
           Width = 192
           Anchors = [akTop, akLeft, akRight, akBottom]
@@ -1058,7 +1117,7 @@ object fmMain: TfmMain
         object bnDeselDiag: TButton
           Left = 12
           Height = 30
-          Top = 660
+          Top = 549
           Width = 188
           Anchors = [akLeft, akBottom]
           Caption = 'Select and unselect'
@@ -1068,24 +1127,24 @@ object fmMain: TfmMain
       end
       object sbDiagram: TScrollBox
         Left = 225
-        Height = 703
+        Height = 592
         Top = 0
-        Width = 983
-        HorzScrollBar.Increment = 60
-        HorzScrollBar.Page = 600
+        Width = 918
+        HorzScrollBar.Increment = 84
+        HorzScrollBar.Page = 840
         HorzScrollBar.Smooth = True
         HorzScrollBar.Tracking = True
         VertScrollBar.Page = 50
         Align = alClient
         AutoSize = True
-        ClientHeight = 699
-        ClientWidth = 979
+        ClientHeight = 588
+        ClientWidth = 914
         TabOrder = 1
         object chChart: TChart
           Left = 0
-          Height = 654
+          Height = 500
           Top = 0
-          Width = 600
+          Width = 840
           AllowZoom = False
           AntialiasingMode = amOn
           AxisList = <          
@@ -1157,15 +1216,15 @@ object fmMain: TfmMain
       end
       object spDiagram: TSplitter
         Left = 220
-        Height = 703
+        Height = 592
         Top = 0
         Width = 5
       end
     end
   end
   object mmMenu: TMainMenu
-    left = 525
-    top = 60
+    left = 376
+    top = 96
     object miFile: TMenuItem
       Caption = 'File'
       object miFileNew: TMenuItem
@@ -1189,6 +1248,17 @@ object fmMain: TfmMain
       object miLine0: TMenuItem
         Caption = '-'
       end
+      object miFileOpenConc: TMenuItem
+        Caption = 'Open concordance...'
+        OnClick = miFileOpenConcClick
+      end
+      object miFileSaveConc: TMenuItem
+        Caption = 'Save concordance...'
+        OnClick = miFileSaveConcClick
+      end
+      object miLine1: TMenuItem
+        Caption = '-'
+      end
       object miFileSetBookmark: TMenuItem
         Caption = 'Set bookmark'
         ShortCut = 16466
@@ -1199,7 +1269,7 @@ object fmMain: TfmMain
         ShortCut = 16469
         OnClick = miFileUpdBookmarkClick
       end
-      object miLine1: TMenuItem
+      object miLine2: TMenuItem
         Caption = '-'
       end
       object miFileExit: TMenuItem
@@ -1215,7 +1285,7 @@ object fmMain: TfmMain
         ShortCut = 16462
         OnClick = miConcordanceCreateClick
       end
-      object miLine2: TMenuItem
+      object miLine3: TMenuItem
         Caption = '-'
       end
       object miConcodanceShowSelected: TMenuItem
@@ -1224,7 +1294,7 @@ object fmMain: TfmMain
         ShortCut = 16460
         OnClick = miConcodanceShowSelectedClick
       end
-      object miLine3: TMenuItem
+      object miLine4: TMenuItem
         Caption = '-'
       end
       object miConcordanceAddSkip: TMenuItem
@@ -1242,7 +1312,7 @@ object fmMain: TfmMain
         ShortCut = 16458
         OnClick = miConcordanceJoinClick
       end
-      object miLine4a: TMenuItem
+      object miLine5: TMenuItem
         Caption = '-'
       end
       object miConcordanceRefreshGrid: TMenuItem
@@ -1250,7 +1320,7 @@ object fmMain: TfmMain
         ShortCut = 24661
         OnClick = miConcordanceRefreshGridClick
       end
-      object miLine4b: TMenuItem
+      object miLine6: TMenuItem
         Caption = '-'
       end
       object miConcordanceOpenSkip: TMenuItem
@@ -1261,7 +1331,7 @@ object fmMain: TfmMain
         Caption = 'Save skip list...'
         OnClick = miConcordanceSaveSkipClick
       end
-      object miLine4: TMenuItem
+      object miLine7: TMenuItem
         Caption = '-'
       end
       object miConcordanceDelCont: TMenuItem
@@ -1269,13 +1339,13 @@ object fmMain: TfmMain
         ShortCut = 24644
         OnClick = miConcordanceDelContClick
       end
-      object miLine5: TMenuItem
+      object miLine8: TMenuItem
         Caption = '-'
       end
-      object miConcordanceSave: TMenuItem
-        Caption = 'Save concordance...'
+      object miConcordanceSaveRep: TMenuItem
+        Caption = 'Save report...'
         ShortCut = 24659
-        OnClick = miConcordanceSaveClick
+        OnClick = miConcordanceSaveRepClick
       end
     end
     object miStatistic: TMenuItem
@@ -1285,7 +1355,7 @@ object fmMain: TfmMain
         ShortCut = 16468
         OnClick = miStatisticCreateClick
       end
-      object miLine6a: TMenuItem
+      object miLine9: TMenuItem
         Caption = '-'
       end
       object miStatisticSortName: TMenuItem
@@ -1298,7 +1368,7 @@ object fmMain: TfmMain
         ShortCut = 24665
         OnClick = miStatisticSortFreqClick
       end
-      object miLine6b: TMenuItem
+      object miLine10: TMenuItem
         Caption = '-'
       end
       object miStatisticSave: TMenuItem
@@ -1323,7 +1393,7 @@ object fmMain: TfmMain
         ShortCut = 57417
         OnClick = miDiagramSingleWordsBookClick
       end
-      object miLine8: TMenuItem
+      object miLine12: TMenuItem
         Caption = '-'
       end
       object miDiaZoomIn: TMenuItem
@@ -1341,7 +1411,7 @@ object fmMain: TfmMain
         ShortCut = 16432
         OnClick = miDiaZoomNormalClick
       end
-      object miLine9: TMenuItem
+      object miLine13: TMenuItem
         Caption = '-'
       end
       object miDiagramShowVal: TMenuItem
@@ -1356,7 +1426,7 @@ object fmMain: TfmMain
         Checked = True
         OnClick = miDiagramShowGridClick
       end
-      object miLine10: TMenuItem
+      object miLine14: TMenuItem
         Caption = '-'
       end
       object miDiagramSave: TMenuItem
@@ -1370,7 +1440,7 @@ object fmMain: TfmMain
         Caption = 'User manual'
         OnClick = miManualClick
       end
-      object miLine7: TMenuItem
+      object miLine15: TMenuItem
         Caption = '-'
       end
       object miCopyrightForm: TMenuItem
@@ -1382,14 +1452,14 @@ object fmMain: TfmMain
   object odOpenDialog: TOpenDialog
     Title = 'Open file'
     left = 888
-    top = 176
+    top = 128
   end
   object sdSaveDialog: TSaveDialog
     Title = 'Save concordance'
     DefaultExt = '.txt'
     Filter = 'Text file|*.txt|HTML file|*.html|All files|*'
     Options = [ofOverwritePrompt, ofEnableSizing, ofViewDetail]
-    left = 736
+    left = 712
     top = 232
   end
   object apAppProp: TApplicationProperties
@@ -1399,27 +1469,27 @@ object fmMain: TfmMain
     top = 164
   end
   object csChartSource1: TListChartSource
-    left = 480
-    top = 280
+    left = 248
+    top = 119
   end
   object csChartSource2: TListChartSource
-    left = 508
-    top = 309
+    left = 276
+    top = 148
   end
   object csChartSource3: TListChartSource
-    left = 536
-    top = 337
+    left = 304
+    top = 176
   end
   object ctChartToolset: TChartToolset
-    left = 296
-    top = 256
+    left = 224
+    top = 272
   end
   object csChartSource4: TListChartSource
-    left = 564
-    top = 365
+    left = 332
+    top = 204
   end
   object csChartSource5: TListChartSource
-    left = 592
-    top = 393
+    left = 360
+    top = 232
   end
 end
