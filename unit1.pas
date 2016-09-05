@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.7
+// WordStatix 1.8
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 // This program is free software: you can redistribute it and/or modify
@@ -186,9 +186,13 @@ type
       Shift: TShiftState);
     procedure clDiagBookmarkKeyUp(Sender: TObject; var Key: word;
       Shift: TShiftState);
+    procedure edFindKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure edFltEndExit(Sender: TObject);
     procedure edFltStartExit(Sender: TObject);
-    procedure edLocateKeyPress(Sender: TObject; var Key: char);
+    procedure edLocateKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+    procedure edReplaceKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+    procedure edWordsContChange(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
     procedure FormClose(Sender: TObject; var CloseAction: TCloseAction);
     procedure FormCreate(Sender: TObject);
     procedure FormKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
@@ -244,9 +248,8 @@ type
     procedure sgWordListKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
     procedure sgWordListSelection(Sender: TObject; aCol, aRow: integer);
     procedure tsDiagramResize(Sender: TObject);
-    procedure udWordsContChanging(Sender: TObject; var AllowChange: boolean);
   private
-    procedure CompileGrid;
+    procedure CompileGrid(blSort: boolean);
     procedure CreateConc(stStartText: string);
     function CreateContext(GridRow: integer; blSetCursor: boolean): string;
     procedure AddSkipWord;
@@ -282,7 +285,7 @@ var
   iWordsTotal: integer = 0;
   iWordsStartTot: integer = 0;
   ttStart, ttEnd: TTime;
-  blGridConcMod: boolean = False;
+  blSortMod: boolean = False;
   blStopConcordance: boolean = False;
   blConInProc: boolean = False;
   blTextModSave: boolean = False;
@@ -483,6 +486,15 @@ begin
   meText.SetFocus;
 end;
 
+procedure TfmMain.FormActivate(Sender: TObject);
+begin
+  // Hack to fix some misalignments in Gnome > 2.16
+  // Do not set properties of components with modified anchors
+  {$ifdef Linux}
+  bnDeselConc.Top := edLocate.Top + edLocate.Height - bnDeselConc.Height;
+  {$endif}
+end;
+
 procedure TfmMain.apAppPropException(Sender: TObject; E: Exception);
 begin
   // Error handling
@@ -626,7 +638,7 @@ begin
   end;
 end;
 
-procedure TfmMain.udWordsContChanging(Sender: TObject; var AllowChange: boolean);
+procedure TfmMain.edWordsContChange(Sender: TObject);
 begin
   // Create the list of context
   if sgWordList.RowCount > 1 then
@@ -665,14 +677,33 @@ begin
   edFltStart.Text := CleanField(edFltStart.Text);
 end;
 
-procedure TfmMain.edLocateKeyPress(Sender: TObject; var Key: char);
+procedure TfmMain.edLocateKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
 var
   i: integer;
 begin
   // Locate word in concordance
-  if key = #13 then
+  if edLocate.Text <> '' then
   begin
-    if edLocate.Text <> '' then
+    if ((key = 13) and (Shift = [ssCtrl])) then
+    begin
+      if sgWordList.Row < sgWordList.RowCount - 1 then
+      begin
+        for i := sgWordList.Row + 1 to sgWordList.RowCount - 1 do
+        begin
+          if UTF8LowerCase(UTF8Copy(sgWordList.Cells[0, i], 1,
+            UTF8Length(edLocate.Text))) = UTF8LowerCase(edLocate.Text) then
+          begin
+            if sgWordList.RowHeights[i] > 0 then
+            begin
+              sgWordList.Row := i;
+            end;
+            Break;
+          end;
+        end;
+      end;
+    end
+    else
+    if key = 13 then
     begin
       for i := 1 to sgWordList.RowCount - 1 do
       begin
@@ -687,6 +718,34 @@ begin
         end;
       end;
     end;
+  end;
+end;
+
+procedure TfmMain.edFindKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+var
+  stClip: string;
+begin
+  // Insert indivisible space
+  if ((Key = Ord(' ')) and (Shift = [ssCtrl])) then
+  begin
+    stClip := Clipboard.AsText;
+    Clipboard.AsText := ' ';
+    edFind.PasteFromClipboard;
+    Clipboard.AsText := stClip;
+  end;
+end;
+
+procedure TfmMain.edReplaceKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+var
+  stClip: string;
+begin
+  // Insert indivisible space
+  if ((Key = Ord(' ')) and (Shift = [ssCtrl])) then
+  begin
+    stClip := Clipboard.AsText;
+    Clipboard.AsText := ' ';
+    edReplace.PasteFromClipboard;
+    Clipboard.AsText := stClip;
   end;
 end;
 
@@ -716,6 +775,8 @@ begin
 end;
 
 procedure TfmMain.meTextKeyDown(Sender: TObject; var Key: word; Shift: TShiftState);
+var
+  stClip: string;
 begin
   // Change Zoom with keys
   if ((Key = 187) and (Shift = [ssShift, ssCtrl])) then
@@ -732,6 +793,15 @@ begin
   begin
     meText.Font.Size := 14;
   end
+  // Insert indivisible space
+  else if ((Key = Ord(' ')) and (Shift = [ssCtrl])) then
+  begin
+    stClip := Clipboard.AsText;
+    Clipboard.AsText := ' ';
+    meText.PasteFromClipboard;
+    Clipboard.AsText := stClip;
+  end
+  // Clean text
   else if ((Key = Ord('P')) and (Shift = [ssCtrl, ssShift])) then
   begin
     if meText.Text = '' then
@@ -954,6 +1024,8 @@ begin
   end;
   SetLength(arWordList, 0);
   SetLength(arWordTextual, 0);
+  iWordsUsed := 0;
+  iWordsTotal := 0;
   meText.Clear;
   lbBookmarks.Clear;
   edFind.Clear;
@@ -976,6 +1048,9 @@ begin
   cbComboDiag4.Clear;
   cbComboDiag5.Clear;
   clDiagBookmark.Clear;
+  stFileName := '';
+  fmMain.Caption := 'WordStatix';
+  miFileSave.Enabled := False;
   pcMain.ActivePage := tsFile;
   sbStatusBar.SimpleText := 'No active concordance.';
 end;
@@ -997,36 +1072,39 @@ begin
       Abort;
     end;
   end;
-  SetLength(arWordList, 0);
-  SetLength(arWordTextual, 0);
-  meText.Clear;
-  lbBookmarks.Clear;
-  edFind.Clear;
-  edReplace.Clear;
-  sgWordList.RowCount := 1;
-  lsContext.Clear;
-  edFltStart.Clear;
-  edFltEnd.Clear;
-  sgStatistic.RowCount := 0;
-  sgStatistic.ColCount := 0;
-  chChart.Visible := False;
-  chChartBarSeries1.Active := False;
-  chChartBarSeries2.Active := False;
-  chChartBarSeries3.Active := False;
-  chChartBarSeries4.Active := False;
-  chChartBarSeries5.Active := False;
-  cbComboDiag1.Clear;
-  cbComboDiag2.Clear;
-  cbComboDiag3.Clear;
-  cbComboDiag4.Clear;
-  cbComboDiag5.Clear;
-  clDiagBookmark.Clear;
+  odOpenDialog.Title := 'Open file';
   odOpenDialog.Filter := 'All formats|*.txt;*.odt;*.docx|' +
     'Text file|*.txt|Writer files|*.odt|' + 'Word files|*.docx|All files|*';
   odOpenDialog.DefaultExt := '.txt';
   odOpenDialog.FileName := '';
   if odOpenDialog.Execute then
     try
+      SetLength(arWordList, 0);
+      SetLength(arWordTextual, 0);
+      iWordsUsed := 0;
+      iWordsTotal := 0;
+      meText.Clear;
+      lbBookmarks.Clear;
+      edFind.Clear;
+      edReplace.Clear;
+      sgWordList.RowCount := 1;
+      lsContext.Clear;
+      edFltStart.Clear;
+      edFltEnd.Clear;
+      sgStatistic.RowCount := 0;
+      sgStatistic.ColCount := 0;
+      chChart.Visible := False;
+      chChartBarSeries1.Active := False;
+      chChartBarSeries2.Active := False;
+      chChartBarSeries3.Active := False;
+      chChartBarSeries4.Active := False;
+      chChartBarSeries5.Active := False;
+      cbComboDiag1.Clear;
+      cbComboDiag2.Clear;
+      cbComboDiag3.Clear;
+      cbComboDiag4.Clear;
+      cbComboDiag5.Clear;
+      clDiagBookmark.Clear;
       if UTF8LowerCase(ExtractFileExt(odOpenDialog.FileName)) = '.txt' then
       begin
         meText.Lines.LoadFromFile(odOpenDialog.FileName);
@@ -1162,6 +1240,7 @@ begin
         fmMain.Caption := 'WordStatix - ' + stFileName;
       end;
       CreateBookmarks(True);
+      sbStatusBar.SimpleText := 'The file has been opened.';
     except
       MessageDlg('It is not possible to open the selected file.',
         mtWarning, [mbOK], 0);
@@ -1193,6 +1272,7 @@ procedure TfmMain.miFileSaveAsClick(Sender: TObject);
 begin
   // Salve as
   pcMain.ActivePage := tsFile;
+  sdSaveDialog.Title := 'Save file';
   sdSaveDialog.Filter := 'Text file|*.txt|All files|*';
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
@@ -1361,7 +1441,7 @@ begin
       if sgWordList.Cells[0, sgWordList.Row] <> '' then
       begin
         sgWordList.DeleteRow(sgWordList.Row);
-        blGridConcMod := True;
+        blSortMod := True;
       end;
     end;
     lsContext.Clear;
@@ -1451,7 +1531,7 @@ begin
       Inc(i);
     end;
   end;
-  blGridConcMod := True;
+  blSortMod := True;
   sgWordList.Row := iPos;
   lsContext.Clear;
   lsContext.Items.Text := CreateContext(sgWordList.Row, True);
@@ -1467,7 +1547,7 @@ procedure TfmMain.miConcordanceRefreshGridClick(Sender: TObject);
 begin
   // Refresh concordance grid
   pcMain.ActivePage := tsConcordance;
-  if blGridConcMod = True then
+  if blSortMod = True then
   begin
     if MessageDlg('Some changes have been made to the concordance grid. ' +
       'Do you want to reject them and recreate the list of words?',
@@ -1476,13 +1556,14 @@ begin
       Abort;
     end;
   end;
-  CompileGrid;
+  CompileGrid(True);
 end;
 
 procedure TfmMain.miConcordanceOpenSkipClick(Sender: TObject);
 begin
   // Open skip list
   pcMain.ActivePage := tsConcordance;
+  odOpenDialog.Title := 'Open skip list';
   odOpenDialog.Filter := 'Text file|*.txt|All files|*';
   odOpenDialog.DefaultExt := '.txt';
   odOpenDialog.FileName := '';
@@ -1499,6 +1580,7 @@ procedure TfmMain.miConcordanceSaveSkipClick(Sender: TObject);
 begin
   // Save skip list
   pcMain.ActivePage := tsConcordance;
+  sdSaveDialog.Title := 'Save skip list';
   sdSaveDialog.Filter := 'Text file|*.txt|All files|*';
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
@@ -1527,7 +1609,7 @@ begin
     MessageDlg('There is no selected recurrence to delete.', mtWarning, [mbOK], 0);
     Abort;
   end;
-  blGridConcMod := True;
+  blSortMod := True;
   if lsContext.Items.Count = 1 then
   begin
     sgWordList.DeleteRow(sgWordList.Row);
@@ -1585,6 +1667,7 @@ begin
     MessageDlg('No concordance has been created.', mtWarning, [mbOK], 0);
     Abort;
   end;
+  sdSaveDialog.Title := 'Save report';
   sdSaveDialog.Filter := 'Text file|*.txt|HTML file|*.html|All files|*';
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
@@ -1611,6 +1694,7 @@ var
   slRow: TStringList;
 begin
   // Sort by name the statistic
+  pcMain.ActivePage := tsStatistic;
   if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
@@ -1669,6 +1753,7 @@ var
   slRow: TStringList;
 begin
   // Sort by frequency the statistic
+  pcMain.ActivePage := tsStatistic;
   if sgStatistic.RowCount = 0 then
   begin
     MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
@@ -1750,6 +1835,7 @@ begin
       mtWarning, [mbOK], 0);
     Abort;
   end;
+  sdSaveDialog.Title := 'Save statistic';
   sdSaveDialog.Filter := 'CSV file|*.csv|All files|*';
   sdSaveDialog.DefaultExt := '.csv';
   sdSaveDialog.FileName := '';
@@ -1793,6 +1879,7 @@ begin
     MessageDlg('There is no diagram to save.', mtWarning, [mbOK], 0);
     Abort;
   end;
+  sdSaveDialog.Title := 'Save diagram';
   sdSaveDialog.Filter := 'JPEG file|*.jpg|PNG file|*.png|All files|*';
   sdSaveDialog.DefaultExt := '.jpg';
   sdSaveDialog.FileName := '';
@@ -2092,6 +2179,8 @@ var
       sgStatistic.ColCount := 0;
       SetLength(arWordList, 0);
       SetLength(arWordTextual, 0);
+      iWordsUsed := 0;
+      iWordsTotal := 0;
       chChart.Visible := False;
       chChartBarSeries1.Active := False;
       chChartBarSeries2.Active := False;
@@ -2175,10 +2264,12 @@ begin
     slText.DelimitedText := stStartText;
     sltext.SaveToFile(GetTempDir + DirectorySeparator + 'wrdstxtmp');
     iWordsStartTot := slText.Count;
+    stStartText := '';
   finally
     slText.Free;
   end;
   try
+    SetLength(arWordTextual, iWordsStartTot);
     slNoWord := TStringList.Create;
     slNoWord.CaseSensitive := False;
     slNoWord.CommaText := meSkipList.Text;
@@ -2205,8 +2296,7 @@ begin
         Application.ProcessMessages;
         Continue;
       end;
-      SetLength(arWordTextual, Length(arWordTextual) + 1);
-      arWordTextual[Length(arWordTextual) - 1].stRecWordTextual := stWord;
+      arWordTextual[iWordsTotal].stRecWordTextual := stWord;
       Inc(iWordsTotal);
       for i := 33 to 38 do
       begin
@@ -2239,8 +2329,6 @@ begin
         if TryStrToInt(stWord, iTestNum) = True then
         begin
           Application.ProcessMessages;
-          SetLength(arWordTextual, Length(arWordTextual) - 1);
-          Dec(iWordsTotal);
           Continue;
         end;
       end;
@@ -2268,7 +2356,7 @@ begin
             arWordList[Length(arWordList) - 1].iRecFreq := 1;
             arWordList[Length(arWordList) - 1].stRecWordPos :=
               arWordList[Length(arWordList) - 1].stRecWordPos +
-              IntToStr(Length(arWordTextual) - 1) + ',';
+              IntToStr(iWordsTotal - 1) + ',';
             if stBookmark <> '' then
             begin
               arWordList[Length(arWordList) - 1].stRecBookPos :=
@@ -2281,7 +2369,7 @@ begin
           begin
             arWordList[i].iRecFreq := arWordList[i].iRecFreq + 1;
             arWordList[i].stRecWordPos :=
-              arWordList[i].stRecWordPos + IntToStr(Length(arWordTextual) - 1) + ',';
+              arWordList[i].stRecWordPos + IntToStr(iWordsTotal - 1) + ',';
             if stBookmark <> '' then
             begin
               arWordList[i].stRecBookPos :=
@@ -2304,7 +2392,7 @@ begin
       Application.ProcessMessages;
       EvalStopProcess;
     end;
-    CompileGrid;
+    CompileGrid(True);
   finally
     CloseFile(flTmpFile);
     slNoWord.Free;
@@ -2408,7 +2496,7 @@ begin
               meSkipList.Text + ', ' + sgWordList.Cells[0, sgWordList.Row];
             meSkipList.Text := CleanField(meSkipList.Text);
             sgWordList.DeleteRow(sgWordList.Row);
-            blGridConcMod := True;
+            blSortMod := True;
           end;
         finally
           WordsList.Free;
@@ -2436,7 +2524,7 @@ begin
   end;
 end;
 
-procedure TfmMain.CompileGrid;
+procedure TfmMain.CompileGrid(blSort: boolean);
 var
   i: integer;
 begin
@@ -2445,21 +2533,24 @@ begin
   begin
     sgWordList.RowCount := 1;
     lsContext.Clear;
-    sbStatusBar.SimpleText :=
-      'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
-      ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
-      ' - Concordance done in ' + FormatDateTime('hh:nn:ss',
-      ttEnd - ttStart) + '.';
+    sbStatusBar.SimpleText := 'No active concordance.';
   end
   else
   begin
     try
       Screen.Cursor := crHourGlass;
+      blStopConcordance := False;
       sgWordList.Enabled := False;
-      sbStatusBar.SimpleText := 'List of words in sorting, please, wait.';
-      Application.ProcessMessages;
       miConcodanceShowSelected.Checked := False;
-      SortWordFreq(arWordList, rgSortBy.ItemIndex);
+      if blSort = True then
+      begin
+        sbStatusBar.SimpleText :=
+          'Sorting the list of words, ' + 'press Ctrl + Shift + H to stop.';
+        Application.ProcessMessages;
+        SortWordFreq(arWordList, rgSortBy.ItemIndex);
+      end;
+      sbStatusBar.SimpleText := 'Filling the concordance grid, please wait.';
+      Application.ProcessMessages;
       sgWordList.RowCount := 1;
       sgWordList.RowCount := Length(arWordList) + 1;
       for i := 0 to Length(arWordList) - 1 do
@@ -2479,17 +2570,15 @@ begin
         lsContext.Items.Delete(0);
     {$endif}
       lsContext.ItemIndex := 0;
-      blGridConcMod := False;
       sbStatusBar.SimpleText :=
         'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
-        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
-        ' - Concordance done in ' + FormatDateTime('hh:nn:ss',
-        ttEnd - ttStart) + '.';
+        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) + '.';
     finally
       sgWordList.Enabled := True;
       Screen.Cursor := crDefault;
     end;
   end;
+  blSortMod := False;
 end;
 
 function TfmMain.CheckFilter(stWord: string): boolean;
@@ -2579,6 +2668,37 @@ begin
 end;
 
 procedure TfmMain.SortWordFreq(var arWordList: array of TRecWordList; flField: shortint);
+
+  procedure EvalStopSort; inline;
+  begin
+    // Stop sort words
+    if blStopConcordance = True then
+    begin
+      sgWordList.RowCount := 1;
+      lsContext.Clear;
+      sgStatistic.RowCount := 0;
+      sgStatistic.ColCount := 0;
+      chChart.Visible := False;
+      chChartBarSeries1.Active := False;
+      chChartBarSeries2.Active := False;
+      chChartBarSeries3.Active := False;
+      chChartBarSeries4.Active := False;
+      chChartBarSeries5.Active := False;
+      cbComboDiag1.Clear;
+      cbComboDiag2.Clear;
+      cbComboDiag3.Clear;
+      cbComboDiag4.Clear;
+      cbComboDiag5.Clear;
+      clDiagBookmark.Clear;
+      sbStatusBar.SimpleText := 'Sorting interrupted.';
+      EnableMenuItems;
+      blConInProc := False;
+      blSortMod := False;
+      Screen.Cursor := crDefault;
+      Abort;
+    end;
+  end;
+
 var
   iPos1, iPos2: integer;
   rcTempRec: TRecWordList;
@@ -2648,6 +2768,7 @@ begin
       end;
     end;
     Application.ProcessMessages;
+    EvalStopSort;
   end;
 end;
 
@@ -2728,11 +2849,12 @@ begin
   if blTextModConc = True then
   begin
     MessageDlg('The text or the settings of the software useful to create ' +
-      'the concordance have been changed after the last concordance ' +
-      'was processed. Recreate it to be able to save it along with its text.',
+      'the concordance have been changed after the last one was processed. ' +
+      'Recreate the concordance to be able to save it along with its text.',
       mtWarning, [mbOK], 0);
     Abort;
   end;
+  sdSaveDialog.Title := 'Save concordance';
   sdSaveDialog.Filter := 'WordStatix files|*.wsx|All files|*';
   sdSaveDialog.DefaultExt := '.wsx';
   sdSaveDialog.FileName := '';
@@ -2741,6 +2863,7 @@ begin
     try
       try
         Screen.Cursor := crHourGlass;
+        Application.ProcessMessages;
         AssignFile(flConc, sdSaveDialog.FileName);
         Rewrite(flConc);
         WriteLn(flConc, '[WordStatixText]');
@@ -2749,14 +2872,14 @@ begin
           WriteLn(flConc, meText.Lines[i]);
         end;
         WriteLn(flConc, '[WordStatixList]');
-        for i := Length(arWordList) - 1 downto 0 do
+        for i := 0 to Length(arWordList) - 1 do
         begin
           WriteLn(flConc, arWordList[i].stRecWord + #9 +
             IntToStr(arWordList[i].iRecFreq) + #9 + arWordList[i].stRecWordPos +
             #9 + arWordList[i].stRecBookPos);
         end;
         WriteLn(flConc, '[WordStatixSeries]');
-        for i := Length(arWordTextual) - 1 downto 0 do
+        for i := 0 to Length(arWordTextual) - 1 do
         begin
           WriteLn(flConc, arWordTextual[i].stRecWordTextual);
         end;
@@ -2815,38 +2938,43 @@ begin
       Abort;
     end;
   end;
-  SetLength(arWordList, 0);
-  SetLength(arWordTextual, 0);
-  meText.Clear;
-  lbBookmarks.Clear;
-  edFind.Clear;
-  edReplace.Clear;
-  sgWordList.RowCount := 1;
-  lsContext.Clear;
-  edFltStart.Clear;
-  edFltEnd.Clear;
-  sgStatistic.RowCount := 0;
-  sgStatistic.ColCount := 0;
-  chChart.Visible := False;
-  chChartBarSeries1.Active := False;
-  chChartBarSeries2.Active := False;
-  chChartBarSeries3.Active := False;
-  chChartBarSeries4.Active := False;
-  chChartBarSeries5.Active := False;
-  cbComboDiag1.Clear;
-  cbComboDiag2.Clear;
-  cbComboDiag3.Clear;
-  cbComboDiag4.Clear;
-  cbComboDiag5.Clear;
-  clDiagBookmark.Clear;
-  odOpenDialog.Filter := 'WS concordances|*.wsx|All files|*';
+  odOpenDialog.Title := 'Open concordance';
+  odOpenDialog.Filter := 'WordStatix files|*.wsx|All files|*';
   odOpenDialog.DefaultExt := '.wsx';
   odOpenDialog.FileName := '';
   if odOpenDialog.Execute then
   begin
     try
       Screen.Cursor := crHourGlass;
+      sbStatusBar.SimpleText := 'Opening concordance, please wait.';
+      Application.ProcessMessages;
       ttStart := Now;
+      SetLength(arWordList, 0);
+      SetLength(arWordTextual, 0);
+      iWordsUsed := 0;
+      iWordsTotal := 0;
+      meText.Clear;
+      lbBookmarks.Clear;
+      edFind.Clear;
+      edReplace.Clear;
+      sgWordList.RowCount := 1;
+      lsContext.Clear;
+      edFltStart.Clear;
+      edFltEnd.Clear;
+      sgStatistic.RowCount := 0;
+      sgStatistic.ColCount := 0;
+      chChart.Visible := False;
+      chChartBarSeries1.Active := False;
+      chChartBarSeries2.Active := False;
+      chChartBarSeries3.Active := False;
+      chChartBarSeries4.Active := False;
+      chChartBarSeries5.Active := False;
+      cbComboDiag1.Clear;
+      cbComboDiag2.Clear;
+      cbComboDiag3.Clear;
+      cbComboDiag4.Clear;
+      cbComboDiag5.Clear;
+      clDiagBookmark.Clear;
       iSection := -1;
       AssignFile(flConc, odOpenDialog.FileName);
       Reset(flConc);
@@ -2959,8 +3087,10 @@ begin
         CloseFile(flConc);
         Screen.Cursor := crDefault;
       end;
-      CompileGrid;
+      CreateBookmarks(False);
+      CompileGrid(False);
       blTextModSave := False;
+      blTextModConc := False;
       miFileSave.Enabled := blTextModSave;
       stFileName := ExtractFileNameWithoutExt(odOpenDialog.FileName) + '.txt';
       fmMain.Caption := 'WordStatix - ' + stFileName;
@@ -2984,12 +3114,12 @@ var
   i: integer;
   stTitle: string;
 begin
-  // Export concordance to file
+  // Export concordance to report
   try
     Screen.Cursor := crHourGlass;
     Application.ProcessMessages;
-    stTitle := InputBox('Title of concordance',
-      'Insert the title of the concordance', '');
+    stTitle := InputBox('Title of report',
+      'Insert the title of the report', '');
     if stTitle = '' then
       stTitle := 'Concordance made with WordStatix';
     AssignFile(ConcFile, stFileName);
