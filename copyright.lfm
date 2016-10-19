@@ -1,14 +1,14 @@
 object fmCopyright: TfmCopyright
-  Left = 550
-  Height = 517
-  Top = 187
-  Width = 748
+  Left = 473
+  Height = 550
+  Top = 235
+  Width = 789
   AlphaBlend = True
   BorderIcons = []
   BorderStyle = bsNone
   Caption = 'Copyright'
-  ClientHeight = 517
-  ClientWidth = 748
+  ClientHeight = 550
+  ClientWidth = 789
   Color = clWhite
   FormStyle = fsStayOnTop
   Icon.Data = {
@@ -553,9 +553,9 @@ object fmCopyright: TfmCopyright
   LCLVersion = '1.6.0.4'
   object shShape: TShape
     Left = 0
-    Height = 517
+    Height = 550
     Top = 0
-    Width = 748
+    Width = 789
     Align = alClient
     Pen.Color = clGray
   end
@@ -564,7 +564,7 @@ object fmCopyright: TfmCopyright
     Height = 49
     Top = 21
     Width = 398
-    Caption = 'WordStatix 1.8.0'
+    Caption = 'WordStatix 1.9.0'
     Font.Color = 170
     Font.Height = 42
     Font.Name = 'Sans'
@@ -590,9 +590,10 @@ object fmCopyright: TfmCopyright
   end
   object meCopyrightText: TMemo
     Left = 24
-    Height = 232
+    Height = 261
     Top = 216
-    Width = 704
+    Width = 745
+    Anchors = [akTop, akLeft, akRight, akBottom]
     Color = clWhite
     Lines.Strings = (
       'This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. You can read the version 3 of the Licence in in http://www.gnu.org/licenses/gpl-3.0.txt. For other information you can also see http://www.gnu.org/licenses.'
@@ -604,10 +605,11 @@ object fmCopyright: TfmCopyright
     TabOrder = 0
   end
   object bnCopyright: TButton
-    Left = 653
+    Left = 694
     Height = 28
-    Top = 472
+    Top = 501
     Width = 75
+    Anchors = [akRight, akBottom]
     Caption = 'OK'
     OnClick = bnCopyrightClick
     TabOrder = 1
@@ -882,8 +884,8 @@ object fmCopyright: TfmCopyright
     Left = 168
     Height = 28
     Top = 77
-    Width = 363
-    Caption = 'A free concordance creator'
+    Width = 525
+    Caption = 'A free software to create concordances'
     Font.Color = 170
     Font.Height = -24
     Font.Style = [fsBold]
@@ -894,12 +896,15 @@ object fmCopyright: TfmCopyright
     Cursor = crHandPoint
     Left = 168
     Height = 18
+    Hint = 'https://sites.google.com/site/wordstatix/'
     Top = 169
     Width = 232
     Caption = 'Visit the website of WordStatix'
     Font.Color = clBlue
     ParentColor = False
     ParentFont = False
+    ParentShowHint = False
+    ShowHint = True
     OnClick = lbSiteClick
   end
   object tmAlarmForm: TTimer

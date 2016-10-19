@@ -1,6 +1,6 @@
 // ***********************************************************************
 // ***********************************************************************
-// WordStatix 1.8
+// WordStatix 1.9
 // Author and copyright: Massimo Nardello, Modena (Italy) 2016.
 // Free software released under GPL licence version 3 or later.
 // This program is free software: you can redistribute it and/or modify
@@ -25,7 +25,11 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, Grids,
   StdCtrls, ExtCtrls, ComCtrls, Menus, LazUTF8, TAGraph, TASources, TASeries,
-  TATools, IniFiles, Clipbrd, zipper, LCLIntf, CheckLst, Types, LazFileUtils;
+  TATools, IniFiles, Clipbrd, zipper, LCLIntf, CheckLst, Types, LazFileUtils,
+  gettext
+  {$IFDEF LCLCarbon}
+  , MacOSAll
+  {$ENDIF};
 
 type
 
@@ -92,6 +96,11 @@ type
     lbNoWord: TLabel;
     csChartSource1: TListChartSource;
     lsContext: TListBox;
+    pmCut: TMenuItem;
+    pmCopy: TMenuItem;
+    pmSelAll: TMenuItem;
+    pmLine1: TMenuItem;
+    pmPaste: TMenuItem;
     miLine1: TMenuItem;
     miFileSaveConc: TMenuItem;
     miFileOpenConc: TMenuItem;
@@ -154,6 +163,7 @@ type
     pnListBookmark: TPanel;
     pnTextBottom: TPanel;
     pcMain: TPageControl;
+    pmMenu: TPopupMenu;
     rgCondFlt: TRadioGroup;
     rgSortBy: TRadioGroup;
     sbDiagram: TScrollBox;
@@ -240,6 +250,10 @@ type
     procedure miStatisticSortNameClick(Sender: TObject);
     procedure pcMainChange(Sender: TObject);
     procedure pcMainChanging(Sender: TObject; var AllowChange: boolean);
+    procedure pmCopyClick(Sender: TObject);
+    procedure pmCutClick(Sender: TObject);
+    procedure pmPasteClick(Sender: TObject);
+    procedure pmSelAllClick(Sender: TObject);
     procedure rgSortBySelectionChanged(Sender: TObject);
     procedure sgStatisticPrepareCanvas(Sender: TObject; aCol, aRow: integer;
       aState: TGridDrawState);
@@ -263,15 +277,36 @@ type
     procedure DisableMenuItems;
     procedure EnableMenuItems;
     function FindNextWord(blMessage: boolean): boolean;
+    function GetOSLanguage: string;
     procedure OpenConcordance;
     procedure SaveConcordance;
     procedure SaveReport(stFileName: string);
     procedure CreateBookmarks(blSetCursor: boolean);
     procedure SortWordFreq(var arWordList: array of TRecWordList;
       flField: shortint);
+    procedure Translation;
     { private declarations }
   public
     { public declarations }
+    // Messages dialogs
+    msg001, msg002, msg003, msg004, msg005, msg006, msg007, msg008,
+    msg009, msg010, msg011, msg012, msg013, msg014, msg015, msg016,
+    msg017, msg018, msg019, msg020, msg021, msg022, msg023, msg024,
+    msg025, msg026, msg027, msg028, msg029, msg030, msg031, msg032,
+    msg033, msg034, msg035, msg036, msg037, msg038, msg039, msg040,
+    msg041, msg042, msg043, msg044, msg045, msg046, msg047, msg048,
+    msg049, msg050, msg051, msg052, msg053, msg054, msg055, msg056,
+    msg057, msg058, msg059, msg060, msg061, msg062, msg063, msg064,
+    msg065, msg066, msg067,
+    // Status bar messages
+    sbr001, sbr002, sbr003, sbr004, sbr005, sbr006, sbr007, sbr008,
+    sbr009, sbr010, sbr011, sbr012, sbr013, sbr014, sbr015, sbr016,
+    sbr017, sbr018, sbr019, sbr020, sbr021, sbr022, sbr023, sbr024,
+    sbr025, sbr026, sbr027, sbr028, sbr029,
+    // Dialogs and files captions
+    dgc001, dgc002, dgc003, dgc004, dgc005, dgc006, dgc007, dgc008,
+    dgc009, dgc010, dgc011, dgc012, dgc013, dgc014, dgc015, dgc016,
+    dgc017, dgc018, dgc019, dgc020, dgc021, dgc022, dgc023: string;
   end;
 
 var
@@ -291,6 +326,9 @@ var
   blTextModSave: boolean = False;
   blTextModConc: boolean = False;
   stDiagTitle: string;
+  stCpr1: string = '';
+  stCpr2: string = '';
+  stCpr3: string = '';
 
 implementation
 
@@ -339,7 +377,32 @@ begin
     'Library' + DirectorySeparator + 'Preferences' + DirectorySeparator;
   myConfigFile := 'wordstatix.plist';
   fmMain.Color := clWhite;
+  miFileOpen.ShortCut := 16463 - 12288;
+  miFileSave.ShortCut := 16467 - 12288;
+  miFileOpenConc.ShortCut := 24655 - 12288;
+  miFileSaveConc.ShortCut := 24659 - 12288;
+  miFileSetBookmark.ShortCut := 16466 - 12288;
+  miFileUpdBookmark.ShortCut := 16469 - 12288;
+  miFileExit.ShortCut := 16465 - 12288;
+  miConcordanceCreate.ShortCut := 16462 - 12288;
+  miConcodanceShowSelected.ShortCut := 16460 - 12288;
+  miConcordanceAddSkip.ShortCut := 24651 - 12288;
+  miConcordanceRemove.ShortCut := 16459 - 12288;
+  miConcordanceJoin.ShortCut := 16458 - 12288;
+  miConcordanceRefreshGrid.ShortCut := 24661 - 12288;
+  miConcordanceDelCont.ShortCut := 24644 - 12288;
+  miConcordanceSaveRep.ShortCut := 24659 - 12288;
+  miStatisticCreate.ShortCut := 16468 - 12288;
+  miStatisticSortName.ShortCut := 16473 - 12288;
+  miStatisticSortFreq.ShortCut := 24665 - 12288;
+  miDiagramAllWordNoBook.ShortCut := 16457 - 12288;
+  miDiagramAllWordsBook.ShortCut := 24649 - 12288;
+  miDiagramSingleWordsBook.ShortCut := 57417 - 12288;
+  miDiaZoomIn.ShortCut := 16571 - 12288;
+  miDiaZoomOut.ShortCut := 16573 - 12288;
+  miDiaZoomNormal.ShortCut := 16432 - 12288;
   {$endif}
+
   if DirectoryExists(myHomeDir) = False then
   begin
     CreateDirUTF8(myHomeDir);
@@ -349,7 +412,9 @@ begin
     meSkipList.Lines.LoadFromFile(myHomeDir + 'skipwords');
   end;
   if FileExistsUTF8(myHomeDir + myConfigFile) then
+  begin
     try
+      Translation;
       MyIni := TIniFile.Create(myHomeDir + myConfigFile);
       if MyIni.ReadString('wordstatix', 'maximize', '') = 'true' then
       begin
@@ -387,6 +452,11 @@ begin
     finally
       MyIni.Free;
     end;
+  end
+  else
+  begin
+    Translation;
+  end;
 end;
 
 procedure TfmMain.FormClose(Sender: TObject; var CloseAction: TCloseAction);
@@ -456,7 +526,7 @@ begin
     pcMain.ActivePage := tsDiagram;
     key := 0;
   end;
-  // Move the diagram
+  // Zoom the diagram
   if ((pcMain.ActivePage = tsDiagram) and (chChart.Visible = True)) then
   begin
     if key = 37 then
@@ -498,7 +568,7 @@ end;
 procedure TfmMain.apAppPropException(Sender: TObject; E: Exception);
 begin
   // Error handling
-  MessageDlg('Operation not correct.', mtError, [mbOK], 0);
+  MessageDlg(msg001, mtError, [mbOK], 0);
 end;
 
 procedure TfmMain.lbBookmarksMouseUp(Sender: TObject; Button: TMouseButton;
@@ -532,6 +602,30 @@ begin
   begin
     AllowChange := True;
   end;
+end;
+
+procedure TfmMain.pmCutClick(Sender: TObject);
+begin
+  // Cut
+  meText.CutToClipboard;
+end;
+
+procedure TfmMain.pmCopyClick(Sender: TObject);
+begin
+  // Copy
+  meText.CopyToClipboard;
+end;
+
+procedure TfmMain.pmPasteClick(Sender: TObject);
+begin
+  // Paste
+  meText.PasteFromClipboard;
+end;
+
+procedure TfmMain.pmSelAllClick(Sender: TObject);
+begin
+  // Select all
+  meText.SelectAll;
 end;
 
 procedure TfmMain.rgSortBySelectionChanged(Sender: TObject);
@@ -808,10 +902,7 @@ begin
     begin
       Abort;
     end;
-    if MessageDlg('Compact all paragraphs not separated by an empty line, ' +
-      'clean the text from double spaces and check the spaces ' +
-      'after the punctuation marks?', mtConfirmation, [mbOK, mbCancel], 0) =
-      mrCancel then
+    if MessageDlg(msg002, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
       Abort;
     try
       Screen.Cursor := crHourGlass;
@@ -863,7 +954,7 @@ begin
     end
     else
     begin
-      MessageDlg('No recurrences of the text to look for.',
+      MessageDlg(msg003,
         mtInformation, [mbOK], 0);
     end;
   end;
@@ -884,7 +975,7 @@ begin
   // produce an unwanted vertical scrolling
   if meText.SelLength = 0 then
   begin
-    MessageDlg('No text is selected.', mtWarning, [mbOK], 0);
+    MessageDlg(msg004, mtWarning, [mbOK], 0);
     Abort;
   end;
   if edReplace.Text <> '' then
@@ -908,9 +999,9 @@ begin
   // Replace all
   if ((edFind.Text <> '') and (edReplace.Text <> '')) then
   begin
-    if MessageDlg('Replace all the recurrences of "' + edFind.Text +
-      '" with "' + edReplace.Text + '" in the current text?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg(msg005 + ' "' + edFind.Text + '" ' + msg006 + ' "' +
+      edReplace.Text + '" ' + msg007, mtConfirmation, [mbOK, mbCancel], 0) =
+      mrCancel then
     begin
       Abort;
     end;
@@ -933,8 +1024,8 @@ begin
     finally
       Screen.Cursor := crDefault;
     end;
-    MessageDlg('The word looked for has been replaced ' + IntToStr(iCount) +
-      ' times.', mtInformation, [mbOK], 0);
+    MessageDlg(msg008 + ' ' + IntToStr(iCount) + ' ' + msg009,
+      mtInformation, [mbOK], 0);
   end;
 end;
 
@@ -1015,9 +1106,7 @@ begin
   // New
   if meText.Text <> '' then
   begin
-    if MessageDlg('Create a new text and a new concordance ' +
-      'closing the existing ones?', mtConfirmation, [mbOK, mbCancel], 0) =
-      mrCancel then
+    if MessageDlg(msg010, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
     end;
@@ -1052,7 +1141,7 @@ begin
   fmMain.Caption := 'WordStatix';
   miFileSave.Enabled := False;
   pcMain.ActivePage := tsFile;
-  sbStatusBar.SimpleText := 'No active concordance.';
+  sbStatusBar.SimpleText := sbr001;
 end;
 
 procedure TfmMain.miFileOpenClick(Sender: TObject);
@@ -1065,16 +1154,13 @@ begin
   pcMain.ActivePage := tsFile;
   if ((meText.Text <> '') and (blTextModSave = True)) then
   begin
-    if MessageDlg('The current text has been changed but has not been saved. ' +
-      'Reject the changes and open a new text?', mtConfirmation,
-      [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg(msg011, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
     end;
   end;
-  odOpenDialog.Title := 'Open file';
-  odOpenDialog.Filter := 'All formats|*.txt;*.odt;*.docx|' +
-    'Text file|*.txt|Writer files|*.odt|' + 'Word files|*.docx|All files|*';
+  odOpenDialog.Title := dgc001;
+  odOpenDialog.Filter := dgc002;
   odOpenDialog.DefaultExt := '.txt';
   odOpenDialog.FileName := '';
   if odOpenDialog.Execute then
@@ -1240,9 +1326,9 @@ begin
         fmMain.Caption := 'WordStatix - ' + stFileName;
       end;
       CreateBookmarks(True);
-      sbStatusBar.SimpleText := 'The file has been opened.';
+      sbStatusBar.SimpleText := sbr002;
     except
-      MessageDlg('It is not possible to open the selected file.',
+      MessageDlg(msg012,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1254,12 +1340,12 @@ begin
   if stFileName <> '' then
     try
       meText.Lines.SaveToFile(stFileName);
-      sbStatusBar.SimpleText := 'The text has been saved.';
+      sbStatusBar.SimpleText := sbr003;
       blTextModSave := False;
       miFileSave.Enabled := blTextModSave;
       fmMain.Caption := 'WordStatix - ' + stFileName;
     except
-      MessageDlg('It is not possible to save the selected file.',
+      MessageDlg(msg013,
         mtWarning, [mbOK], 0);
     end
   else
@@ -1272,20 +1358,20 @@ procedure TfmMain.miFileSaveAsClick(Sender: TObject);
 begin
   // Salve as
   pcMain.ActivePage := tsFile;
-  sdSaveDialog.Title := 'Save file';
-  sdSaveDialog.Filter := 'Text file|*.txt|All files|*';
+  sdSaveDialog.Title := dgc003;
+  sdSaveDialog.Filter := dgc004;
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
       stFileName := sdSaveDialog.FileName;
       meText.Lines.SaveToFile(stFileName);
-      sbStatusBar.SimpleText := 'The text has been saved.';
+      sbStatusBar.SimpleText := sbr004;
       blTextModSave := False;
       miFileSave.Enabled := blTextModSave;
       fmMain.Caption := 'WordStatix - ' + stFileName;
     except
-      MessageDlg('It is not possible to save the selected file.',
+      MessageDlg(msg014,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1461,7 +1547,7 @@ begin
   end
   else
   begin
-    MessageDlg('There is no word to remove.', mtWarning, [mbOK], 0);
+    MessageDlg(msg015, mtWarning, [mbOK], 0);
   end;
 end;
 
@@ -1477,7 +1563,7 @@ begin
   end;
   if sgWordList.RowCount < 2 then
   begin
-    MessageDlg('No concordance has been created.', mtWarning, [mbOK], 0);
+    MessageDlg(msg016, mtWarning, [mbOK], 0);
     Abort;
   end;
   blSelection := False;
@@ -1492,11 +1578,10 @@ begin
   end;
   if blSelection = False then
   begin
-    MessageDlg('No words are selected.', mtWarning, [mbOK], 0);
+    MessageDlg(msg017, mtWarning, [mbOK], 0);
     Abort;
   end;
-  if MessageDlg('Associate all the recurrences of the selected words ' +
-    'to those of the current word "' + sgWordList.Cells[0, sgWordList.Row] +
+  if MessageDlg(msg018 + ' "' + sgWordList.Cells[0, sgWordList.Row] +
     '"?', mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
   begin
     Abort;
@@ -1549,9 +1634,7 @@ begin
   pcMain.ActivePage := tsConcordance;
   if blSortMod = True then
   begin
-    if MessageDlg('Some changes have been made to the concordance grid. ' +
-      'Do you want to reject them and recreate the list of words?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg(msg019, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
     end;
@@ -1563,15 +1646,15 @@ procedure TfmMain.miConcordanceOpenSkipClick(Sender: TObject);
 begin
   // Open skip list
   pcMain.ActivePage := tsConcordance;
-  odOpenDialog.Title := 'Open skip list';
-  odOpenDialog.Filter := 'Text file|*.txt|All files|*';
+  odOpenDialog.Title := dgc005;
+  odOpenDialog.Filter := dgc006;
   odOpenDialog.DefaultExt := '.txt';
   odOpenDialog.FileName := '';
   if odOpenDialog.Execute then
     try
       meSkipList.Lines.LoadFromFile(odOpenDialog.FileName);
     except
-      MessageDlg('It is not possible to open the skip list.',
+      MessageDlg(msg020,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1580,15 +1663,15 @@ procedure TfmMain.miConcordanceSaveSkipClick(Sender: TObject);
 begin
   // Save skip list
   pcMain.ActivePage := tsConcordance;
-  sdSaveDialog.Title := 'Save skip list';
-  sdSaveDialog.Filter := 'Text file|*.txt|All files|*';
+  sdSaveDialog.Title := dgc007;
+  sdSaveDialog.Filter := dgc008;
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
       meSkipList.Lines.SaveToFile(sdSaveDialog.FileName);
     except
-      MessageDlg('It is not possible to save the skip list.',
+      MessageDlg(msg021,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1601,12 +1684,12 @@ begin
   // Selete selected recurrence
   if lsContext.Items.Count < 1 then
   begin
-    MessageDlg('There is no recurrence to delete.', mtWarning, [mbOK], 0);
+    MessageDlg(msg022, mtWarning, [mbOK], 0);
     Abort;
   end;
   if lsContext.ItemIndex < 0 then
   begin
-    MessageDlg('There is no selected recurrence to delete.', mtWarning, [mbOK], 0);
+    MessageDlg(msg023, mtWarning, [mbOK], 0);
     Abort;
   end;
   blSortMod := True;
@@ -1664,19 +1747,19 @@ begin
   pcMain.ActivePage := tsConcordance;
   if sgWordList.RowCount < 2 then
   begin
-    MessageDlg('No concordance has been created.', mtWarning, [mbOK], 0);
+    MessageDlg(msg024, mtWarning, [mbOK], 0);
     Abort;
   end;
-  sdSaveDialog.Title := 'Save report';
-  sdSaveDialog.Filter := 'Text file|*.txt|HTML file|*.html|All files|*';
+  sdSaveDialog.Title := dgc009;
+  sdSaveDialog.Filter := dgc010;
   sdSaveDialog.DefaultExt := '.txt';
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
       SaveReport(sdSaveDialog.FileName);
-      sbStatusBar.SimpleText := 'The report has been saved.';
+      sbStatusBar.SimpleText := sbr005;
     except
-      MessageDlg('It is not possible to save the report.',
+      MessageDlg(msg025,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1697,7 +1780,7 @@ begin
   pcMain.ActivePage := tsStatistic;
   if sgStatistic.RowCount = 0 then
   begin
-    MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
+    MessageDlg(msg026, mtWarning, [mbOK], 0);
     Abort;
   end;
   try
@@ -1756,7 +1839,7 @@ begin
   pcMain.ActivePage := tsStatistic;
   if sgStatistic.RowCount = 0 then
   begin
-    MessageDlg('No statistic available.', mtWarning, [mbOK], 0);
+    MessageDlg(msg027, mtWarning, [mbOK], 0);
     Abort;
   end;
   try
@@ -1831,20 +1914,20 @@ begin
   pcMain.ActivePage := tsStatistic;
   if sgStatistic.RowCount = 0 then
   begin
-    MessageDlg('There is no statistic to save.',
+    MessageDlg(msg028,
       mtWarning, [mbOK], 0);
     Abort;
   end;
-  sdSaveDialog.Title := 'Save statistic';
-  sdSaveDialog.Filter := 'CSV file|*.csv|All files|*';
+  sdSaveDialog.Title := dgc011;
+  sdSaveDialog.Filter := dgc012;
   sdSaveDialog.DefaultExt := '.csv';
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
     try
       sgStatistic.SaveToCSVFile(sdSaveDialog.FileName);
-      sbStatusBar.SimpleText := 'The statistic has been saved.';
+      sbStatusBar.SimpleText := sbr006;
     except
-      MessageDlg('It is not possible to save the selected file.',
+      MessageDlg(msg029,
         mtWarning, [mbOK], 0);
     end;
 end;
@@ -1876,11 +1959,11 @@ begin
   pcMain.ActivePage := tsDiagram;
   if chChart.Visible = False then
   begin
-    MessageDlg('There is no diagram to save.', mtWarning, [mbOK], 0);
+    MessageDlg(msg030, mtWarning, [mbOK], 0);
     Abort;
   end;
-  sdSaveDialog.Title := 'Save diagram';
-  sdSaveDialog.Filter := 'JPEG file|*.jpg|PNG file|*.png|All files|*';
+  sdSaveDialog.Title := dgc013;
+  sdSaveDialog.Filter := dgc014;
   sdSaveDialog.DefaultExt := '.jpg';
   sdSaveDialog.FileName := '';
   if sdSaveDialog.Execute then
@@ -1895,9 +1978,9 @@ begin
         begin
           chChart.SaveToFile(TJpegImage, sdSaveDialog.FileName);
         end;
-        sbStatusBar.SimpleText := 'The diagram has been saved.';
+        sbStatusBar.SimpleText := sbr007;
       except
-        MessageDlg('It is not possible to save the diagram.',
+        MessageDlg(msg031,
           mtWarning, [mbOK], 0);
       end;
     finally
@@ -1965,33 +2048,41 @@ begin
   // Show manual
   {$ifdef Linux}
   if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
-    'manual-wordstatix.pdf') = False then
+    'manual-wordstatix-' + LowerCase(Copy(GetEnvironmentVariable('LANG'), 1, 2)) +
+    '.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix. ' +
-      'Download it from the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix.',
-      mtInformation, [mbOK], 0);
+    if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+      'manual-wordstatix-en.pdf') = False then
+    begin
+      MessageDlg(msg032 + LineEnding + 'https://sites.google.com/site/wordstatix.',
+        mtInformation, [mbOK], 0);
+    end;
   end;
   {$endif}
   {$ifdef Win32}
   if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
-    'manual-wordstatix.pdf') = False then
+    'manual-wordstatix-' + LowerCase(GetOSLanguage) +
+    '.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix. ' +
-      'Download it from the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix.',
-      mtInformation, [mbOK], 0);
+    if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+      'manual-wordstatix-en.pdf') = False then
+    begin
+      MessageDlg(msg032 + LineEnding + 'https://sites.google.com/site/wordstatix.',
+        mtInformation, [mbOK], 0);
+    end;
   end;
   {$endif}
   {$ifdef Darwin}
-  if OpenDocument(StringReplace(ExtractFileDir(Application.ExeName),
-    'wordstatix.app/Contents/MacOS', '', []) + DirectorySeparator +
-    'manual-wordstatix.pdf') = False then
+  if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    'manual-wordstatix-' +
+    LowerCase(GetOSLanguage) + '.pdf') = False then
   begin
-    MessageDlg('No manual available in the folder of WordStatix. ' +
-      'Download it from the website of the software:' + LineEnding +
-      'https://sites.google.com/site/wordstatix.',
-      mtInformation, [mbOK], 0);
+    if OpenDocument(ExtractFileDir(Application.ExeName) + DirectorySeparator +
+      'manual-wordstatix-en.pdf') = False then
+    begin
+      MessageDlg(msg032 + LineEnding + 'https://sites.google.com/site/wordstatix.',
+        mtInformation, [mbOK], 0);
+    end;
   end;
   {$endif}
 end;
@@ -1999,6 +2090,18 @@ end;
 procedure TfmMain.miCopyrightFormClick(Sender: TObject);
 begin
   // Copyright
+  if stCpr1 <> '' then
+  begin
+    fmCopyright.lbCopyrightSubTitle.Caption := stCpr1;
+  end;
+  if stCpr2 <> '' then
+  begin
+    fmCopyright.lbCopyrightAuthor1.Caption := stCpr2;
+  end;
+  if stCpr3 <> '' then
+  begin
+    fmCopyright.lbSite.Caption := stCpr3;
+  end;
   fmCopyright.ShowModal;
 end;
 
@@ -2030,8 +2133,7 @@ begin
         begin
           Screen.Cursor := crDefault;
         end;
-        MessageDlg('A bookmark is not open or closed properly ' +
-          'with double square brackets.', mtWarning, [mbOK], 0);
+        MessageDlg(msg033, mtWarning, [mbOK], 0);
         Exit;
       end
       else if iStart + 50 < iEnd then
@@ -2041,9 +2143,7 @@ begin
         begin
           Screen.Cursor := crDefault;
         end;
-        MessageDlg('A bookmark seems to be too long. ' +
-          'Check the text to control that there are ' +
-          'no unwanted double square brackets.', mtWarning, [mbOK], 0);
+        MessageDlg(msg034, mtWarning, [mbOK], 0);
         Exit;
       end
       else
@@ -2054,9 +2154,7 @@ begin
         begin
           Screen.Cursor := crDefault;
         end;
-        MessageDlg('A bookmark seems to be incorrect. ' +
-          'Check the text to control that there are ' +
-          'no unwanted double square brackets.', mtWarning, [mbOK], 0);
+        MessageDlg(msg035, mtWarning, [mbOK], 0);
         Exit;
       end
       else if UTF8Copy(stText, iStart, iEnd - iStart) <> '' then
@@ -2100,9 +2198,7 @@ begin
             begin
               Screen.Cursor := crDefault;
             end;
-            MessageDlg('The bookmark "' + slBookmark[i] +
-              '" is used more than once. ' +
-              'Check the text and make all its recurrences unique.',
+            MessageDlg(msg036 + ' "' + slBookmark[i] + '" ' + msg037,
               mtWarning, [mbOK], 0);
             Exit;
           end;
@@ -2120,8 +2216,7 @@ begin
       begin
         Screen.Cursor := crDefault;
       end;
-      MessageDlg('Bookmarks cannot contain commas, spaces or be an asterisk. ' +
-        'The incorrect bookmarks have been changed accordingly.',
+      MessageDlg(msg038,
         mtWarning, [mbOK], 0);
     end;
   finally
@@ -2152,7 +2247,7 @@ begin
       Result := False;
       if blMessage = True then
       begin
-        MessageDlg('No more recurrences of the text to look for.',
+        MessageDlg(msg039,
           mtInformation, [mbOK], 0);
       end;
     end;
@@ -2193,7 +2288,7 @@ var
       cbComboDiag4.Clear;
       cbComboDiag5.Clear;
       clDiagBookmark.Clear;
-      sbStatusBar.SimpleText := 'Concordance interrupted.';
+      sbStatusBar.SimpleText := sbr008;
       EnableMenuItems;
       blConInProc := False;
       Screen.Cursor := crDefault;
@@ -2205,20 +2300,19 @@ begin
   if meText.Text = '' then
   begin
     pcMain.ActivePage := tsFile;
-    MessageDlg('No text available.', mtWarning, [mbOK], 0);
+    MessageDlg(msg040, mtWarning, [mbOK], 0);
     Abort;
   end
   else
   if sgWordList.RowCount > 1 then
   begin
-    if MessageDlg('Replace the current concordance with a new one?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg(msg041, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
       Abort;
   end;
   ttStart := Now;
   Screen.Cursor := crHourGlass;
   Application.ProcessMessages;
-  sbStatusBar.SimpleText := 'Concordance in processing, please wait.';
+  sbStatusBar.SimpleText := sbr009;
   CreateBookmarks(False);
   blStopConcordance := False;
   blConInProc := True;
@@ -2252,6 +2346,13 @@ begin
   stStartText := StringReplace(stStartText, #39, #39 + ' ', [rfReplaceAll]);
   stStartText := StringReplace(stStartText, #96, #39 + ' ', [rfReplaceAll]);
   stStartText := StringReplace(stStartText, '’', #39 + ' ', [rfReplaceAll]);
+  stStartText := StringReplace(stStartText, '[[', ' [[', [rfReplaceAll]);
+  stStartText := StringReplace(stStartText, ']]', ']] ', [rfReplaceAll]);
+  while UTF8Pos(LineEnding + ' [[', stStartText) > 0 do
+  begin
+    stStartText := StringReplace(stStartText,
+      LineEnding + ' [[', LineEnding + '[[', [rfReplaceAll]);
+  end;
   while UTF8Pos('  ', stStartText) > 0 do
   begin
     stStartText := StringReplace(stStartText, '  ', ' ', [rfReplaceAll]);
@@ -2270,14 +2371,14 @@ begin
   end;
   try
     SetLength(arWordTextual, iWordsStartTot);
+    iWordsStartTot := iWordsStartTot - lbBookmarks.Count;
     slNoWord := TStringList.Create;
     slNoWord.CaseSensitive := False;
     slNoWord.CommaText := meSkipList.Text;
     sbStatusBar.SimpleText :=
-      'Concordance in processing, press Ctrl + Shift + H to stop. ' +
-      'Analyzed words: ' + FormatFloat('#,##0', iWordsTotal) +
-      ' of ' + FormatFloat('#,##0', iWordsStartTot) + ' - Unique words found: ' +
-      FormatFloat('#,##0', iWordsUsed) + '.';
+      sbr010 + ' ' + FormatFloat('#,##0', iWordsTotal) + ' ' +
+      sbr011 + ' ' + FormatFloat('#,##0', iWordsStartTot) + ' - ' +
+      sbr012 + ' ' + FormatFloat('#,##0', iWordsUsed) + '.';
     AssignFile(flTmpFile, GetTempDir + DirectorySeparator + 'wrdstxtmp');
     Reset(flTmpFile);
     while not EOF(flTmpFile) do
@@ -2291,7 +2392,7 @@ begin
           stBookmark := UTF8Copy(stBookmark, 1, 20) + '...';
         if stBookmark = '' then
         begin
-          stBookmark := '*';
+          stBookmark := '?';
         end;
         Application.ProcessMessages;
         Continue;
@@ -2383,10 +2484,9 @@ begin
         if iWordsTotal mod 5000 = 0 then
         begin
           sbStatusBar.SimpleText :=
-            'Concordance in processing, press Ctrl + Shift + H to stop. ' +
-            'Analyzed words: ' + FormatFloat('#,##0', iWordsTotal) +
-            ' of ' + FormatFloat('#,##0', iWordsStartTot) +
-            ' - Unique words found: ' + FormatFloat('#,##0', iWordsUsed) + '.';
+            sbr013 + ' ' + FormatFloat('#,##0', iWordsTotal) + ' ' +
+            sbr014 + ' ' + FormatFloat('#,##0', iWordsStartTot) + ' - ' +
+            sbr015 + ' ' + FormatFloat('#,##0', iWordsUsed) + '.';
         end;
       end;
       Application.ProcessMessages;
@@ -2408,14 +2508,13 @@ begin
   blTextModConc := False;
   ttEnd := Now;
   sbStatusBar.SimpleText :=
-    'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
-    ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
-    ' - Concordance done in ' + FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
-  MessageDlg('The concordance has been created.' + LineEnding +
-    LineEnding + 'Total words (without bookmarks): ' +
-    FormatFloat('#,##0', iWordsTotal) + '.' + LineEnding + 'Unique words: ' +
-    FormatFloat('#,##0', iWordsUsed) + '.' + LineEnding + 'Concordance done in ' +
-    FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.',
+    sbr016 + ' ' + FormatFloat('#,##0', iWordsTotal) + ' - ' + sbr017 +
+    ' ' + FormatFloat('#,##0', iWordsUsed) + '. ' + sbr018 + ' ' +
+    FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
+  MessageDlg(msg042 + LineEnding + LineEnding + msg043 + ' ' +
+    FormatFloat('#,##0', iWordsTotal) + '.' + LineEnding + msg044 +
+    ' ' + FormatFloat('#,##0', iWordsUsed) + '.' + LineEnding + msg045 +
+    ' ' + FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.',
     mtInformation, [mbOK], 0);
 end;
 
@@ -2520,7 +2619,7 @@ begin
   end
   else
   begin
-    MessageDlg('There is no word to add to the skip list.', mtWarning, [mbOK], 0);
+    MessageDlg(msg046, mtWarning, [mbOK], 0);
   end;
 end;
 
@@ -2533,7 +2632,7 @@ begin
   begin
     sgWordList.RowCount := 1;
     lsContext.Clear;
-    sbStatusBar.SimpleText := 'No active concordance.';
+    sbStatusBar.SimpleText := sbr019;
   end
   else
   begin
@@ -2544,12 +2643,11 @@ begin
       miConcodanceShowSelected.Checked := False;
       if blSort = True then
       begin
-        sbStatusBar.SimpleText :=
-          'Sorting the list of words, ' + 'press Ctrl + Shift + H to stop.';
+        sbStatusBar.SimpleText := sbr020;
         Application.ProcessMessages;
         SortWordFreq(arWordList, rgSortBy.ItemIndex);
       end;
-      sbStatusBar.SimpleText := 'Filling the concordance grid, please wait.';
+      sbStatusBar.SimpleText := sbr021;
       Application.ProcessMessages;
       sgWordList.RowCount := 1;
       sgWordList.RowCount := Length(arWordList) + 1;
@@ -2571,8 +2669,8 @@ begin
     {$endif}
       lsContext.ItemIndex := 0;
       sbStatusBar.SimpleText :=
-        'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
-        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) + '.';
+        sbr022 + ' ' + FormatFloat('#,##0', iWordsTotal) + ' - ' +
+        sbr023 + ' ' + FormatFloat('#,##0', iWordsUsed) + '.';
     finally
       sgWordList.Enabled := True;
       Screen.Cursor := crDefault;
@@ -2690,7 +2788,7 @@ procedure TfmMain.SortWordFreq(var arWordList: array of TRecWordList; flField: s
       cbComboDiag4.Clear;
       cbComboDiag5.Clear;
       clDiagBookmark.Clear;
-      sbStatusBar.SimpleText := 'Sorting interrupted.';
+      sbStatusBar.SimpleText := sbr024;
       EnableMenuItems;
       blConInProc := False;
       blSortMod := False;
@@ -2837,20 +2935,18 @@ begin
   // Save concordance
   if meText.Text = '' then
   begin
-    MessageDlg('No text available.', mtWarning, [mbOK], 0);
+    MessageDlg(msg047, mtWarning, [mbOK], 0);
     Abort;
   end;
   if sgWordList.RowCount = 1 then
   begin
-    MessageDlg('No concordance available.',
+    MessageDlg(msg048,
       mtWarning, [mbOK], 0);
     Abort;
   end;
   if blTextModConc = True then
   begin
-    MessageDlg('The text or the settings of the software useful to create ' +
-      'the concordance have been changed after the last one was processed. ' +
-      'Recreate the concordance to be able to save it along with its text.',
+    MessageDlg(msg049,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -2909,13 +3005,13 @@ begin
         WriteLn(flConc, stCOnditions);
         WriteLn(flConc, '[WordStatixResults]');
         WriteLn(flConc, IntToStr(iWordsTotal) + #9 + IntToStr(iWordsUsed));
-        sbStatusBar.SimpleText := 'The concordance has been saved.';
+        sbStatusBar.SimpleText := sbr025;
       finally
         CloseFile(flConc);
         Screen.Cursor := crDefault;
       end;
     except
-      MessageDlg('It is not possibile to save the concordance.',
+      MessageDlg(msg050,
         mtWarning, [mbOK], 0);
     end;
   end;
@@ -2931,22 +3027,20 @@ begin
   pcMain.ActivePage := tsFile;
   if ((meText.Text <> '') and (blTextModSave = True)) then
   begin
-    if MessageDlg('The current text has been changed but has not been saved. ' +
-      'Reject the changes and open a new concordance with its text?',
-      mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
+    if MessageDlg(msg051, mtConfirmation, [mbOK, mbCancel], 0) = mrCancel then
     begin
       Abort;
     end;
   end;
-  odOpenDialog.Title := 'Open concordance';
-  odOpenDialog.Filter := 'WordStatix files|*.wsx|All files|*';
+  odOpenDialog.Title := dgc015;
+  odOpenDialog.Filter := dgc016;
   odOpenDialog.DefaultExt := '.wsx';
   odOpenDialog.FileName := '';
   if odOpenDialog.Execute then
   begin
     try
       Screen.Cursor := crHourGlass;
-      sbStatusBar.SimpleText := 'Opening concordance, please wait.';
+      sbStatusBar.SimpleText := sbr026;
       Application.ProcessMessages;
       ttStart := Now;
       SetLength(arWordList, 0);
@@ -3077,8 +3171,7 @@ begin
           end
           else
           begin
-            MessageDlg('The selected file was not created ' +
-              'with WordStatix, and so cannot be opened.',
+            MessageDlg(msg052,
               mtWarning, [mbOK], 0);
             Exit;
           end;
@@ -3097,12 +3190,11 @@ begin
       pcMain.ActivePage := tsConcordance;
       ttEnd := Now;
       sbStatusBar.SimpleText :=
-        'Total words (without bookmarks): ' + FormatFloat('#,##0', iWordsTotal) +
-        ' - Unique words: ' + FormatFloat('#,##0', iWordsUsed) +
-        ' - Concordance loaded in ' + FormatDateTime('hh:nn:ss',
-        ttEnd - ttStart) + '.';
+        sbr027 + ' ' + FormatFloat('#,##0', iWordsTotal) + ' - ' +
+        sbr028 + ' ' + FormatFloat('#,##0', iWordsUsed) + '. ' +
+        sbr029 + ' ' + FormatDateTime('hh:nn:ss', ttEnd - ttStart) + '.';
     except
-      MessageDlg('It is not possibile to open the concordance.',
+      MessageDlg(msg053,
         mtWarning, [mbOK], 0);
     end;
   end;
@@ -3118,10 +3210,9 @@ begin
   try
     Screen.Cursor := crHourGlass;
     Application.ProcessMessages;
-    stTitle := InputBox('Title of report',
-      'Insert the title of the report', '');
+    stTitle := InputBox(dgc017, dgc018, '');
     if stTitle = '' then
-      stTitle := 'Concordance made with WordStatix';
+      stTitle := dgc019;
     AssignFile(ConcFile, stFileName);
     Rewrite(ConcFile);
     if UTF8LowerCase(ExtractFileExt(stFileName)) = '.html' then
@@ -3139,7 +3230,8 @@ begin
         if sgWordList.RowHeights[i] > 0 then
         begin
           WriteLn(ConcFile, '<H2>' + sgWordList.Cells[0, i] + '</H2>');
-          WriteLn(ConcFile, '<b>' + sgWordList.Cells[1, i] + ' recurrences.</b>');
+          WriteLn(ConcFile, '<b>' + sgWordList.Cells[1, i] + ' ' +
+            dgc020 + '.</b>');
           WriteLn(ConcFile, '<BR>');
           WriteLn(ConcFile, StringReplace(CreateContext(i, False),
             LineEnding, '<BR>' + LineEnding, [rfReplaceAll]));
@@ -3159,7 +3251,7 @@ begin
         if sgWordList.RowHeights[i] > 0 then
         begin
           WriteLn(ConcFile, '*** ' + sgWordList.Cells[0, i] + ' ***');
-          WriteLn(ConcFile, sgWordList.Cells[1, i] + ' recurrences.');
+          WriteLn(ConcFile, sgWordList.Cells[1, i] + ' ' + dgc020 + '.');
           WriteLn(ConcFile, '');
           WriteLn(ConcFile, CreateContext(i, False));
           WriteLn(ConcFile, '');
@@ -3213,7 +3305,7 @@ begin
   if sgWordList.RowCount = 1 then
   begin
     pcMain.ActivePage := tsConcordance;
-    MessageDlg('No concordance available.',
+    MessageDlg(msg054,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -3235,7 +3327,7 @@ begin
     begin
       sgStatistic.ColWidths[i] := 70;
     end;
-    sgStatistic.Cells[1, 0] := 'Total';
+    sgStatistic.Cells[1, 0] := dgc021;
     sgStatistic.Cells[2, 0] := '*';
     clDiagBookmark.Items.Add('*');
     for i := 0 to lbBookmarks.Count - 1 do
@@ -3276,7 +3368,7 @@ begin
     begin
       sgStatistic.RowCount := 0;
       sgStatistic.ColCount := 0;
-      MessageDlg('No words are selected in the concordance gird.',
+      MessageDlg(msg055,
         mtWarning, [mbOK], 0);
       pcMain.ActivePage := tsConcordance;
       sgWordList.SetFocus;
@@ -3284,7 +3376,7 @@ begin
     else
     begin
       sgStatistic.RowCount := sgStatistic.RowCount + 1;
-      sgStatistic.Cells[0, sgStatistic.RowCount - 1] := 'Total';
+      sgStatistic.Cells[0, sgStatistic.RowCount - 1] := dgc021;
       for i := 1 to sgStatistic.ColCount - 1 do
       begin
         iTot := 0;
@@ -3318,13 +3410,13 @@ begin
   if sgStatistic.RowCount = 0 then
   begin
     pcMain.ActivePage := tsStatistic;
-    MessageDlg('No active statistic.',
+    MessageDlg(msg056,
       mtWarning, [mbOK], 0);
     Abort;
   end;
   if clDiagBookmark.Count = 0 then
   begin
-    MessageDlg('No bookmark available.',
+    MessageDlg(msg057,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -3338,13 +3430,13 @@ begin
   end;
   if blSelBookmark = False then
   begin
-    MessageDlg('At least one bookmark must be selected.',
+    MessageDlg(msg058,
       mtWarning, [mbOK], 0);
     Abort;
   end;
   if cbComboDiag1.Text = '' then
   begin
-    MessageDlg('No word selected in Word 1 field.',
+    MessageDlg(msg059,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -3364,7 +3456,7 @@ begin
     begin
       if blLastField = True then
       begin
-        MessageDlg('The fields "Word" must be compiled contiguously.',
+        MessageDlg(msg060,
           mtWarning, [mbOK], 0);
         Abort;
       end
@@ -3381,7 +3473,7 @@ begin
     begin
       if blLastField = True then
       begin
-        MessageDlg('The fields "Word" must be compiled contiguously.',
+        MessageDlg(msg060,
           mtWarning, [mbOK], 0);
         Abort;
       end
@@ -3398,7 +3490,7 @@ begin
     begin
       if blLastField = True then
       begin
-        MessageDlg('The fields "Word" must be compiled contiguously.',
+        MessageDlg(msg060,
           mtWarning, [mbOK], 0);
         Abort;
       end
@@ -3417,7 +3509,7 @@ begin
     begin
       if slCheckDouble[i] = slCheckDouble[i + 1] then
       begin
-        MessageDlg('The same word has been selected twice.',
+        MessageDlg(msg061,
           mtWarning, [mbOK], 0);
         Exit;
       end;
@@ -3425,8 +3517,7 @@ begin
   finally
     slCheckDouble.Free;
   end;
-  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
-    stDiagTitle);
+  stDiagTitle := InputBox(dgc022, dgc023, stDiagTitle);
   if stDiagTitle = '' then
   begin
     chChart.Title.Visible := False;
@@ -3637,13 +3728,13 @@ begin
   if sgStatistic.RowCount = 0 then
   begin
     pcMain.ActivePage := tsStatistic;
-    MessageDlg('No active statistic.',
+    MessageDlg(msg062,
       mtWarning, [mbOK], 0);
     Abort;
   end;
   if clDiagBookmark.Count = 0 then
   begin
-    MessageDlg('No bookmark available.',
+    MessageDlg(msg063,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -3657,12 +3748,11 @@ begin
   end;
   if blSelBookmark = False then
   begin
-    MessageDlg('At least one bookmark must be selected.',
+    MessageDlg(msg064,
       mtWarning, [mbOK], 0);
     Abort;
   end;
-  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
-    stDiagTitle);
+  stDiagTitle := InputBox(dgc022, dgc023, stDiagTitle);
   if stDiagTitle = '' then
   begin
     chChart.Title.Visible := False;
@@ -3713,13 +3803,13 @@ begin
   if sgStatistic.RowCount = 0 then
   begin
     pcMain.ActivePage := tsStatistic;
-    MessageDlg('No active statistic.',
+    MessageDlg(msg065,
       mtWarning, [mbOK], 0);
     Abort;
   end;
   if clDiagBookmark.Count = 0 then
   begin
-    MessageDlg('No bookmark available.',
+    MessageDlg(msg066,
       mtWarning, [mbOK], 0);
     Abort;
   end;
@@ -3733,12 +3823,11 @@ begin
   end;
   if blSelBookmark = False then
   begin
-    MessageDlg('At least one bookmark must be selected.',
+    MessageDlg(msg067,
       mtWarning, [mbOK], 0);
     Abort;
   end;
-  stDiagTitle := InputBox('Title of diagram', 'Insert the title of the diagram.',
-    stDiagTitle);
+  stDiagTitle := InputBox(dgc022, dgc023, stDiagTitle);
   if stDiagTitle = '' then
   begin
     chChart.Title.Visible := False;
@@ -3858,6 +3947,454 @@ begin
   edFltEnd.ReadOnly := False;
   edLocate.ReadOnly := False;
   bnDeselConc.Enabled := True;
+end;
+
+// *****************************************************************************
+// ****************************** Translation **********************************
+// *****************************************************************************
+
+procedure TfmMain.Translation;
+var
+  stLngFile: string;
+  MyIni: TIniFile;
+begin
+  // Load translation
+  {$ifdef Linux}
+  stLngFile := ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    LowerCase(Copy(GetEnvironmentVariable('LANG'), 1, 2) + '.lng');
+  {$endif}
+  {$ifdef Win32}
+  stLngFile := ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    LowerCase(GetOSLanguage) + '.lng';
+  {$endif}
+  {$ifdef Darwin}
+  stLngFile := ExtractFileDir(Application.ExeName) + DirectorySeparator +
+    LowerCase(GetOSLanguage) + '.lng';
+  {$endif}
+  // Load translation file if existing
+  if FileExistsUTF8(stLngFile) then
+  begin
+    try
+      MyIni := TIniFile.Create(stLngFile);
+      // Messages dialogs
+      msg001 := MyIni.ReadString('wordstatix', 'msg001', '');
+      msg002 := MyIni.ReadString('wordstatix', 'msg002', '');
+      msg003 := MyIni.ReadString('wordstatix', 'msg003', '');
+      msg004 := MyIni.ReadString('wordstatix', 'msg004', '');
+      msg005 := MyIni.ReadString('wordstatix', 'msg005', '');
+      msg006 := MyIni.ReadString('wordstatix', 'msg006', '');
+      msg007 := MyIni.ReadString('wordstatix', 'msg007', '');
+      msg008 := MyIni.ReadString('wordstatix', 'msg008', '');
+      msg009 := MyIni.ReadString('wordstatix', 'msg009', '');
+      msg010 := MyIni.ReadString('wordstatix', 'msg010', '');
+      msg011 := MyIni.ReadString('wordstatix', 'msg011', '');
+      msg012 := MyIni.ReadString('wordstatix', 'msg012', '');
+      msg013 := MyIni.ReadString('wordstatix', 'msg013', '');
+      msg014 := MyIni.ReadString('wordstatix', 'msg014', '');
+      msg015 := MyIni.ReadString('wordstatix', 'msg015', '');
+      msg016 := MyIni.ReadString('wordstatix', 'msg016', '');
+      msg017 := MyIni.ReadString('wordstatix', 'msg017', '');
+      msg018 := MyIni.ReadString('wordstatix', 'msg018', '');
+      msg019 := MyIni.ReadString('wordstatix', 'msg019', '');
+      msg020 := MyIni.ReadString('wordstatix', 'msg020', '');
+      msg021 := MyIni.ReadString('wordstatix', 'msg021', '');
+      msg022 := MyIni.ReadString('wordstatix', 'msg022', '');
+      msg023 := MyIni.ReadString('wordstatix', 'msg023', '');
+      msg024 := MyIni.ReadString('wordstatix', 'msg024', '');
+      msg025 := MyIni.ReadString('wordstatix', 'msg025', '');
+      msg026 := MyIni.ReadString('wordstatix', 'msg026', '');
+      msg027 := MyIni.ReadString('wordstatix', 'msg027', '');
+      msg028 := MyIni.ReadString('wordstatix', 'msg028', '');
+      msg029 := MyIni.ReadString('wordstatix', 'msg029', '');
+      msg030 := MyIni.ReadString('wordstatix', 'msg030', '');
+      msg031 := MyIni.ReadString('wordstatix', 'msg031', '');
+      msg032 := MyIni.ReadString('wordstatix', 'msg032', '');
+      msg033 := MyIni.ReadString('wordstatix', 'msg033', '');
+      msg034 := MyIni.ReadString('wordstatix', 'msg034', '');
+      msg035 := MyIni.ReadString('wordstatix', 'msg035', '');
+      msg036 := MyIni.ReadString('wordstatix', 'msg036', '');
+      msg037 := MyIni.ReadString('wordstatix', 'msg037', '');
+      msg038 := MyIni.ReadString('wordstatix', 'msg038', '');
+      msg039 := MyIni.ReadString('wordstatix', 'msg039', '');
+      msg040 := MyIni.ReadString('wordstatix', 'msg040', '');
+      msg041 := MyIni.ReadString('wordstatix', 'msg041', '');
+      msg042 := MyIni.ReadString('wordstatix', 'msg042', '');
+      msg043 := MyIni.ReadString('wordstatix', 'msg043', '');
+      msg044 := MyIni.ReadString('wordstatix', 'msg044', '');
+      msg045 := MyIni.ReadString('wordstatix', 'msg045', '');
+      msg046 := MyIni.ReadString('wordstatix', 'msg046', '');
+      msg047 := MyIni.ReadString('wordstatix', 'msg047', '');
+      msg048 := MyIni.ReadString('wordstatix', 'msg048', '');
+      msg049 := MyIni.ReadString('wordstatix', 'msg049', '');
+      msg050 := MyIni.ReadString('wordstatix', 'msg050', '');
+      msg051 := MyIni.ReadString('wordstatix', 'msg051', '');
+      msg052 := MyIni.ReadString('wordstatix', 'msg052', '');
+      msg053 := MyIni.ReadString('wordstatix', 'msg053', '');
+      msg054 := MyIni.ReadString('wordstatix', 'msg054', '');
+      msg055 := MyIni.ReadString('wordstatix', 'msg055', '');
+      msg056 := MyIni.ReadString('wordstatix', 'msg056', '');
+      msg057 := MyIni.ReadString('wordstatix', 'msg057', '');
+      msg058 := MyIni.ReadString('wordstatix', 'msg058', '');
+      msg059 := MyIni.ReadString('wordstatix', 'msg059', '');
+      msg060 := MyIni.ReadString('wordstatix', 'msg060', '');
+      msg061 := MyIni.ReadString('wordstatix', 'msg061', '');
+      msg062 := MyIni.ReadString('wordstatix', 'msg062', '');
+      msg063 := MyIni.ReadString('wordstatix', 'msg063', '');
+      msg064 := MyIni.ReadString('wordstatix', 'msg064', '');
+      msg065 := MyIni.ReadString('wordstatix', 'msg065', '');
+      msg066 := MyIni.ReadString('wordstatix', 'msg066', '');
+      msg067 := MyIni.ReadString('wordstatix', 'msg067', '');
+      // Status bar messages
+      sbr001 := MyIni.ReadString('wordstatix', 'sbr001', '');
+      sbr002 := MyIni.ReadString('wordstatix', 'sbr002', '');
+      sbr003 := MyIni.ReadString('wordstatix', 'sbr003', '');
+      sbr004 := MyIni.ReadString('wordstatix', 'sbr004', '');
+      sbr005 := MyIni.ReadString('wordstatix', 'sbr005', '');
+      sbr006 := MyIni.ReadString('wordstatix', 'sbr006', '');
+      sbr007 := MyIni.ReadString('wordstatix', 'sbr007', '');
+      sbr008 := MyIni.ReadString('wordstatix', 'sbr008', '');
+      sbr009 := MyIni.ReadString('wordstatix', 'sbr009', '');
+      sbr010 := MyIni.ReadString('wordstatix', 'sbr010', '');
+      sbr011 := MyIni.ReadString('wordstatix', 'sbr011', '');
+      sbr012 := MyIni.ReadString('wordstatix', 'sbr012', '');
+      sbr013 := MyIni.ReadString('wordstatix', 'sbr013', '');
+      sbr014 := MyIni.ReadString('wordstatix', 'sbr014', '');
+      sbr015 := MyIni.ReadString('wordstatix', 'sbr015', '');
+      sbr016 := MyIni.ReadString('wordstatix', 'sbr016', '');
+      sbr017 := MyIni.ReadString('wordstatix', 'sbr017', '');
+      sbr018 := MyIni.ReadString('wordstatix', 'sbr018', '');
+      sbr019 := MyIni.ReadString('wordstatix', 'sbr019', '');
+      sbr020 := MyIni.ReadString('wordstatix', 'sbr020', '');
+      sbr021 := MyIni.ReadString('wordstatix', 'sbr021', '');
+      sbr022 := MyIni.ReadString('wordstatix', 'sbr022', '');
+      sbr023 := MyIni.ReadString('wordstatix', 'sbr023', '');
+      sbr024 := MyIni.ReadString('wordstatix', 'sbr024', '');
+      sbr025 := MyIni.ReadString('wordstatix', 'sbr025', '');
+      sbr026 := MyIni.ReadString('wordstatix', 'sbr026', '');
+      sbr027 := MyIni.ReadString('wordstatix', 'sbr027', '');
+      sbr028 := MyIni.ReadString('wordstatix', 'sbr028', '');
+      sbr029 := MyIni.ReadString('wordstatix', 'sbr029', '');
+      // Dialogs and files captions
+      dgc001 := MyIni.ReadString('wordstatix', 'dgc001', '');
+      dgc002 := MyIni.ReadString('wordstatix', 'dgc002', '');
+      dgc003 := MyIni.ReadString('wordstatix', 'dgc003', '');
+      dgc004 := MyIni.ReadString('wordstatix', 'dgc004', '');
+      dgc005 := MyIni.ReadString('wordstatix', 'dgc005', '');
+      dgc006 := MyIni.ReadString('wordstatix', 'dgc006', '');
+      dgc007 := MyIni.ReadString('wordstatix', 'dgc007', '');
+      dgc008 := MyIni.ReadString('wordstatix', 'dgc008', '');
+      dgc009 := MyIni.ReadString('wordstatix', 'dgc009', '');
+      dgc010 := MyIni.ReadString('wordstatix', 'dgc010', '');
+      dgc011 := MyIni.ReadString('wordstatix', 'dgc011', '');
+      dgc012 := MyIni.ReadString('wordstatix', 'dgc012', '');
+      dgc013 := MyIni.ReadString('wordstatix', 'dgc013', '');
+      dgc014 := MyIni.ReadString('wordstatix', 'dgc014', '');
+      dgc015 := MyIni.ReadString('wordstatix', 'dgc015', '');
+      dgc016 := MyIni.ReadString('wordstatix', 'dgc016', '');
+      dgc017 := MyIni.ReadString('wordstatix', 'dgc017', '');
+      dgc018 := MyIni.ReadString('wordstatix', 'dgc018', '');
+      dgc019 := MyIni.ReadString('wordstatix', 'dgc019', '');
+      dgc020 := MyIni.ReadString('wordstatix', 'dgc020', '');
+      dgc021 := MyIni.ReadString('wordstatix', 'dgc021', '');
+      dgc022 := MyIni.ReadString('wordstatix', 'dgc022', '');
+      dgc023 := MyIni.ReadString('wordstatix', 'dgc023', '');
+      // Components
+      sbStatusBar.SimpleText := MyIni.ReadString('wordstatix', 'cpt001', '');
+      tsFile.Caption := MyIni.ReadString('wordstatix', 'cpt002', '');
+      lbFind.Caption := MyIni.ReadString('wordstatix', 'cpt003', '');
+      lbReplace.Caption := MyIni.ReadString('wordstatix', 'cpt004', '');
+      bnFindFirst.Caption := MyIni.ReadString('wordstatix', 'cpt005', '');
+      bnFindNext.Caption := MyIni.ReadString('wordstatix', 'cpt006', '');
+      bnReplace.Caption := MyIni.ReadString('wordstatix', 'cpt007', '');
+      bnReplaceAll.Caption := MyIni.ReadString('wordstatix', 'cpt008', '');
+      tsConcordance.Caption := MyIni.ReadString('wordstatix', 'cpt009', '');
+      sgWordList.Columns[0].Title.Caption :=
+        MyIni.ReadString('wordstatix', 'cpt010', '');
+      sgWordList.Columns[1].Title.Caption :=
+        MyIni.ReadString('wordstatix', 'cpt011', '');
+      sgWordList.Columns[2].Title.Caption :=
+        MyIni.ReadString('wordstatix', 'cpt012', '');
+      rgSortBy.Caption := MyIni.ReadString('wordstatix', 'cpt013', '');
+      rgSortBy.Items.Clear;
+      rgSortBy.Items.Add(MyIni.ReadString('wordstatix', 'cpt014', ''));
+      rgSortBy.Items.Add(MyIni.ReadString('wordstatix', 'cpt015', ''));
+      rgSortBy.ItemIndex := 0;
+      lbNoWord.Caption := MyIni.ReadString('wordstatix', 'cpt016', '');
+      lbContext.Caption := MyIni.ReadString('wordstatix', 'cpt017', '');
+      lbWordsCont.Caption := MyIni.ReadString('wordstatix', 'cpt018', '');
+      lbFltStart.Caption := MyIni.ReadString('wordstatix', 'cpt019', '');
+      lbFltEnd.Caption := MyIni.ReadString('wordstatix', 'cpt020', '');
+      cbCollatedSort.Caption := MyIni.ReadString('wordstatix', 'cpt021', '');
+      cbSkipNumbers.Caption := MyIni.ReadString('wordstatix', 'cpt022', '');
+      rgCondFlt.Items.Clear;
+      rgCondFlt.Items.Add(MyIni.ReadString('wordstatix', 'cpt023', ''));
+      rgCondFlt.Items.Add(MyIni.ReadString('wordstatix', 'cpt024', ''));
+      rgCondFlt.ItemIndex := 0;
+      bnDeselConc.Caption := MyIni.ReadString('wordstatix', 'cpt025', '');
+      lbLocate.Caption := MyIni.ReadString('wordstatix', 'cpt026', '');
+      tsStatistic.Caption := MyIni.ReadString('wordstatix', 'cpt027', '');
+      tsDiagram.Caption := MyIni.ReadString('wordstatix', 'cpt028', '');
+      lbDiag1.Caption := MyIni.ReadString('wordstatix', 'cpt029', '');
+      lbDiag2.Caption := MyIni.ReadString('wordstatix', 'cpt030', '');
+      lbDiag3.Caption := MyIni.ReadString('wordstatix', 'cpt031', '');
+      lbDiag4.Caption := MyIni.ReadString('wordstatix', 'cpt032', '');
+      lbDiag5.Caption := MyIni.ReadString('wordstatix', 'cpt033', '');
+      lbDiagBookmark.Caption := MyIni.ReadString('wordstatix', 'cpt034', '');
+      bnDeselDiag.Caption := MyIni.ReadString('wordstatix', 'cpt035', '');
+      odOpenDialog.Title := MyIni.ReadString('wordstatix', 'cpt036', '');
+      sdSaveDialog.Title := MyIni.ReadString('wordstatix', 'cpt037', '');
+      // Menu items
+      miFile.Caption := MyIni.ReadString('wordstatix', 'cpm001', '');
+      miFileNew.Caption := MyIni.ReadString('wordstatix', 'cpm002', '');
+      miFileOpen.Caption := MyIni.ReadString('wordstatix', 'cpm003', '');
+      miFileSave.Caption := MyIni.ReadString('wordstatix', 'cpm004', '');
+      miFileSaveAs.Caption := MyIni.ReadString('wordstatix', 'cpm005', '');
+      miFileOpenConc.Caption := MyIni.ReadString('wordstatix', 'cpm006', '');
+      miFileSaveConc.Caption := MyIni.ReadString('wordstatix', 'cpm007', '');
+      miFileSetBookmark.Caption := MyIni.ReadString('wordstatix', 'cpm008', '');
+      miFileUpdBookmark.Caption := MyIni.ReadString('wordstatix', 'cpm009', '');
+      miFileExit.Caption := MyIni.ReadString('wordstatix', 'cpm010', '');
+      miConcordance.Caption := MyIni.ReadString('wordstatix', 'cpm011', '');
+      miConcordanceCreate.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm012', '');
+      miConcodanceShowSelected.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm013', '');
+      miConcordanceAddSkip.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm014', '');
+      miConcordanceRemove.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm015', '');
+      miConcordanceJoin.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm016', '');
+      miConcordanceRefreshGrid.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm017', '');
+      miConcordanceOpenSkip.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm018', '');
+      miConcordanceSaveSkip.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm019', '');
+      miConcordanceDelCont.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm020', '');
+      miConcordanceSaveRep.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm021', '');
+      miStatistic.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm022', '');
+      miStatisticCreate.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm023', '');
+      miStatisticSortName.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm024', '');
+      miStatisticSortFreq.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm025', '');
+      miStatisticSave.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm026', '');
+      miDiagram.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm027', '');
+      miDiagramAllWordNoBook.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm028', '');
+      miDiagramAllWordsBook.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm029', '');
+      miDiagramSingleWordsBook.Caption :=
+        MyIni.ReadString('wordstatix', 'cpm030', '');
+      miDiaZoomIn.Caption := MyIni.ReadString('wordstatix', 'cpm031', '');
+      miDiaZoomOut.Caption := MyIni.ReadString('wordstatix', 'cpm032', '');
+      miDiaZoomNormal.Caption := MyIni.ReadString('wordstatix', 'cpm033', '');
+      miDiagramShowVal.Caption := MyIni.ReadString('wordstatix', 'cpm034', '');
+      miDiagramShowGrid.Caption := MyIni.ReadString('wordstatix', 'cpm035', '');
+      miDiagramSave.Caption := MyIni.ReadString('wordstatix', 'cpm036', '');
+      miManual.Caption := MyIni.ReadString('wordstatix', 'cpm037', '');
+      miCopyrightForm.Caption := MyIni.ReadString('wordstatix', 'cpm038', '');
+      pmCut.Caption := MyIni.ReadString('wordstatix', 'cpm039', '');
+      pmCopy.Caption := MyIni.ReadString('wordstatix', 'cpm040', '');
+      pmPaste.Caption := MyIni.ReadString('wordstatix', 'cpm041', '');
+      pmSelAll.Caption := MyIni.ReadString('wordstatix', 'cpm042', '');
+      //Copyright
+      stCpr1 := MyIni.ReadString('wordstatix', 'cpr001', '');
+      stCpr2 := MyIni.ReadString('wordstatix', 'cpr002', '');
+      stCpr3 := MyIni.ReadString('wordstatix', 'cpr003', '');
+    finally
+      MyIni.Free;
+    end;
+  end
+  else
+  begin
+    // No translation file
+    // Messages dialogs
+    msg001 := 'Operation not correct.';
+    msg002 := 'Compact all paragraphs not separated by an empty line, ' +
+      'clean the text from double spaces and check the spaces ' +
+      'after the punctuation marks?';
+    msg003 := 'No recurrences of the text to look for.';
+    msg004 := 'No text is selected.';
+    msg005 := 'Replace all the recurrences of';
+    msg006 := 'with';
+    msg007 := 'in the current text?';
+    msg008 := 'The word looked for has been replaced';
+    msg009 := 'times.';
+    msg010 := 'Create a new text and a new concordance ' +
+      'closing the existing ones?';
+    msg011 := 'The current text has been changed but has not been saved. ' +
+      'Reject the changes and open a new text?';
+    msg012 := 'It is not possible to open the selected file.';
+    msg013 := 'It is not possible to save the selected file.';
+    msg014 := 'It is not possible to save the selected file.';
+    msg015 := 'There is no word to remove.';
+    msg016 := 'No concordance has been created.';
+    msg017 := 'No words are selected.';
+    msg018 := 'Associate all the recurrences of the selected words ' +
+      'to those of the current word';
+    msg019 := 'Some changes have been made to the concordance grid. ' +
+      'Do you want to reject them and recreate the list of words?';
+    msg020 := 'It is not possible to open the skip list.';
+    msg021 := 'It is not possible to save the skip list.';
+    msg022 := 'There is no recurrence to delete.';
+    msg023 := 'There is no selected recurrence to delete.';
+    msg024 := 'No concordance has been created.';
+    msg025 := 'It is not possible to save the report.';
+    msg026 := 'No statistic available.';
+    msg027 := 'No statistic available.';
+    msg028 := 'There is no statistic to save.';
+    msg029 := 'It is not possible to save the selected file.';
+    msg030 := 'There is no diagram to save.';
+    msg031 := 'It is not possible to save the diagram.';
+    msg032 := 'No manual available in the folder of WordStatix. ' +
+      'Download it from the website of the software:';
+    msg033 := 'A bookmark is not open or closed properly ' +
+      'with double square brackets.';
+    msg034 := 'A bookmark seems to be too long. ' +
+      'Check the text to control that there are ' +
+      'no unwanted double square brackets.';
+    msg035 := 'A bookmark seems to be incorrect. ' +
+      'Check the text to control that there are ' +
+      'no unwanted double square brackets.';
+    msg036 := 'The bookmark';
+    msg037 := 'is used more than once. ' +
+      'Check the text and make all its recurrences unique.';
+    msg038 := 'Bookmarks cannot contain commas, spaces or be an asterisk. ' +
+      'The incorrect bookmarks have been changed accordingly.';
+    msg039 := 'No more recurrences of the text to look for.';
+    msg040 := 'No text available.';
+    msg041 := 'Replace the current concordance with a new one?';
+    msg042 := 'The concordance has been created.';
+    msg043 := 'Total words (without bookmarks):';
+    msg044 := 'Unique words:';
+    msg045 := 'Concordance done in';
+    msg046 := 'There is no word to add to the skip list.';
+    msg047 := 'No text available.';
+    msg048 := 'No concordance available.';
+    msg049 := 'The text or the settings of the software useful to create ' +
+      'the concordance have been changed after the last one was processed. ' +
+      'Recreate the concordance to be able to save it along with its text.';
+    msg050 := 'It is not possibile to save the concordance.';
+    msg051 := 'The current text has been changed but has not been saved. ' +
+      'Reject the changes and open a new concordance with its text?';
+    msg052 := 'The selected file was not created ' +
+      'with WordStatix, and so cannot be opened.';
+    msg053 := 'It is not possibile to open the concordance.';
+    msg054 := 'No concordance available.';
+    msg055 := 'No words are selected in the concordance gird.';
+    msg056 := 'No active statistic.';
+    msg057 := 'No bookmark available.';
+    msg058 := 'At least one bookmark must be selected.';
+    msg059 := 'No word selected in Word 1 field.';
+    msg060 := 'The fields "Word" must be compiled contiguously.';
+    msg061 := 'The same word has been selected twice.';
+    msg062 := 'No active statistic.';
+    msg063 := 'No bookmark available.';
+    msg064 := 'At least one bookmark must be selected.';
+    msg065 := 'No active statistic.';
+    msg066 := 'No bookmark available.';
+    msg067 := 'At least one bookmark must be selected.';
+    // Status bar messages
+    sbr001 := 'No active concordance.';
+    sbr002 := 'The file has been opened.';
+    sbr003 := 'The text has been saved.';
+    sbr004 := 'The text has been saved.';
+    sbr005 := 'The report has been saved.';
+    sbr006 := 'The statistic has been saved.';
+    sbr007 := 'The diagram has been saved.';
+    sbr008 := 'Concordance interrupted.';
+    sbr009 := 'Concordance in processing, please wait.';
+    sbr010 := 'Concordance in processing, press Ctrl + Shift + H to stop. ' +
+      'Analyzed words:';
+    sbr011 := 'of';
+    sbr012 := 'Unique words found:';
+    sbr013 := 'Concordance in processing, press Ctrl + Shift + H to stop. ' +
+      'Analyzed words:';
+    sbr014 := 'of';
+    sbr015 := 'Unique words found:';
+    sbr016 := 'Total words (without bookmarks):';
+    sbr017 := 'Unique words:';
+    sbr018 := 'Concordance done in';
+    sbr019 := 'No active concordance.';
+    sbr020 := 'Sorting the list of words, press Ctrl + Shift + H to stop.';
+    sbr021 := 'Filling the concordance grid, please wait.';
+    sbr022 := 'Total words (without bookmarks):';
+    sbr023 := 'Unique words:';
+    sbr024 := 'Sorting interrupted.';
+    sbr025 := 'The concordance has been saved.';
+    sbr026 := 'Opening concordance, please wait.';
+    sbr027 := 'Total words (without bookmarks):';
+    sbr028 := 'Unique words:';
+    sbr029 := 'Concordance loaded in';
+    // Dialogs and files captions
+    dgc001 := 'Open file';
+    dgc002 := 'All formats|*.txt;*.odt;*.docx|' +
+      'Text file|*.txt|Writer files|*.odt|' + 'Word files|*.docx|All files|*';
+    dgc003 := 'Save file';
+    dgc004 := 'Text file|*.txt|All files|*';
+    dgc005 := 'Open skip list';
+    dgc006 := 'Text file|*.txt|All files|*';
+    dgc007 := 'Save skip list';
+    dgc008 := 'Text file|*.txt|All files|*';
+    dgc009 := 'Save report';
+    dgc010 := 'Text file|*.txt|HTML file|*.html|All files|*';
+    dgc011 := 'Save statistic';
+    dgc012 := 'CSV file|*.csv|All files|*';
+    dgc013 := 'Save diagram';
+    dgc014 := 'JPEG file|*.jpg|PNG file|*.png|All files|*';
+    dgc015 := 'Open concordance';
+    dgc016 := 'WordStatix files|*.wsx|All files|*';
+    dgc017 := 'Title of report';
+    dgc018 := 'Insert the title of the report';
+    dgc019 := 'Concordance made with WordStatix';
+    dgc020 := 'recurrences';
+    dgc021 := 'Total';
+    dgc022 := 'Title of diagram';
+    dgc023 := 'Insert the title of the diagram.';
+  end;
+end;
+
+function TfmMain.GetOSLanguage: string;
+var
+  fbl: string;
+  {$IFDEF LCLCarbon}
+  theLocaleRef: CFLocaleRef;
+  locale: CFStringRef;
+  buffer: StringPtr;
+  bufferSize: CFIndex;
+  encoding: CFStringEncoding;
+  success: boolean;
+  {$ENDIF}
+begin
+  {$IFDEF LCLCarbon}
+  theLocaleRef := CFLocaleCopyCurrent;
+  locale := CFLocaleGetIdentifier(theLocaleRef);
+  encoding := 0;
+  bufferSize := 256;
+  buffer := new(StringPtr);
+  success := CFStringGetPascalString(locale, buffer, bufferSize, encoding);
+  if success then
+    l := string(buffer^)
+  else
+    l := '';
+  fbl := Copy(l, 1, 2);
+  dispose(buffer);
+  {$ELSE}
+  {$IFDEF LINUX}
+  fbl := Copy(GetEnvironmentVariable('LC_CTYPE'), 1, 2);
+    {$ELSE}
+  GetLanguageIDs(l, fbl);
+    {$ENDIF}
+  {$ENDIF}
+  Result := fbl;
 end;
 
 end.
